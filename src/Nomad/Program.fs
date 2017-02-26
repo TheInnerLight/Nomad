@@ -1,17 +1,6 @@
 ﻿// Learn more about F# at http://fsharp.org
 namespace Nomad
 
-open System
-open System.IO
-open System.Text
-open System.Text.RegularExpressions
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Routing
-open Microsoft.Extensions.Configuration
-open Microsoft.FSharp.Reflection
-
 module TestServer =
     let testHandler1 x = handler {
         do! HttpHandler.setStatus Http.Ok
