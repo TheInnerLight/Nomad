@@ -11,7 +11,9 @@ open Microsoft.FSharp.Reflection
 module Async =
     let inline startAsPlainTask (work : Async<unit>) : System.Threading.Tasks.Task = System.Threading.Tasks.Task.Factory.StartNew(fun () -> work |> Async.RunSynchronously)
 
-type Startup() = 
+type NomadConfig = {RouteConfig : HttpHandler<unit>}
+
+module Nomad =
     let runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         let reqType = Http.requestMethod <| ctx.Request.Method
         let req' = {Method = reqType; PathString = ctx.Request.Path.Value; QueryString = ctx.Request.QueryString.Value}
@@ -23,21 +25,10 @@ type Startup() =
             |> Async.startAsPlainTask
         |None -> async.Return () |> Async.startAsPlainTask
 
-    static member val RouteHandler = Unchecked.defaultof<HttpHandler<unit>> with get, set
-
-    member this.Configure (app : IApplicationBuilder) = 
-        app.Run (fun ctx -> runContextWith (Startup.RouteHandler) ctx)
-
-type NomadConfig = {RouteConfig : HttpHandler<unit>}
-
-module Nomad =
     let run nc =
-        Startup.RouteHandler <- nc.RouteConfig
         WebHostBuilder()
             .UseKestrel()
             .UseContentRoot(Directory.GetCurrentDirectory())
-            .UseConfiguration(ConfigurationBuilder()
-                                .Build())
-            .UseStartup<Startup>()
+            .Configure(fun app -> app.Run (fun ctx -> runContextWith (nc.RouteConfig) ctx))
             .Build()
             .Run()
