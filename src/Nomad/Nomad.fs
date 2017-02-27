@@ -1,11 +1,14 @@
 namespace Nomad
 
 open System.IO
+open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.Google
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Routing
 open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.Primitives
 open Microsoft.FSharp.Reflection
 
 module Async =
@@ -17,9 +20,10 @@ module Nomad =
     let runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         let reqType = Http.requestMethod <| ctx.Request.Method
         let req' = {Method = reqType; PathString = ctx.Request.Path.Value; QueryString = ctx.Request.QueryString.Value}
-        match HttpHandler.runHandler handler req' {Status = ClientError4xx(04); Body = fun _ -> async.Return() } with
+        match HttpHandler.runHandler handler req' {Status = ClientError4xx(04); ContentType = ContentType.``text/plain``; Body = fun _ -> async.Return() } with
         |Some (_,resp) ->
             ctx.Response.StatusCode <- Http.responseCode resp.Status
+            ctx.Response.Headers.Add("Content-Type", StringValues(ContentType.asString resp.ContentType))
             ctx.Response.Body 
             |> resp.Body
             |> Async.startAsPlainTask
@@ -29,6 +33,7 @@ module Nomad =
         WebHostBuilder()
             .UseKestrel()
             .UseContentRoot(Directory.GetCurrentDirectory())
-            .Configure(fun app -> app.Run (fun ctx -> runContextWith (nc.RouteConfig) ctx))
+            .Configure(fun app -> 
+                app.Run (fun ctx -> runContextWith (nc.RouteConfig) ctx))
             .Build()
             .Run()

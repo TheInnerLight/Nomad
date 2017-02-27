@@ -9,7 +9,42 @@ type HttpVerb =
     |Patch
     |Delete
 
-type HTTPResponseStatus =
+type TopLevelMime =
+    |Application
+    |Audio
+    |Example
+    |Font
+    |Image
+    |Message
+    |Model
+    |Multipart
+    |Text
+    |Video
+
+type MimeType = {TopLevel : TopLevelMime; SubType : string}
+
+module ContentType =
+    let asString mimeType =
+        let {TopLevel = topLevel; SubType = subType} = mimeType
+        match topLevel with
+            |Application    -> sprintf "application/%s" subType
+            |Audio          -> sprintf "audio/%s" subType
+            |Example        -> sprintf "example/%s" subType
+            |Font           -> sprintf "font/%s" subType
+            |Image          -> sprintf "image/%s" subType
+            |Message        -> sprintf "message/%s" subType
+            |Model          -> sprintf "model/%s" subType
+            |Multipart      -> sprintf "multipart/%s" subType
+            |Text           -> sprintf "text/%s" subType
+            |Video          -> sprintf "video/%s" subType
+
+    let ``application/json`` = {TopLevel = Application; SubType = "json"}
+    let ``application/xml`` = {TopLevel = Application; SubType = "xml"}
+    let ``text/css`` = {TopLevel = Text; SubType = "css"}
+    let ``text/html`` = {TopLevel = Text; SubType = "html"}
+    let ``text/plain`` = {TopLevel = Text; SubType = "plain"}
+
+type HttpResponseStatus =
     |Informational1xx of int
     |Success2xx of int
     |Redirection3xx of int
@@ -23,7 +58,8 @@ type HttpRequest = {
     }
 
 type HttpResponse = {
-    Status : HTTPResponseStatus
+    Status : HttpResponseStatus
+    ContentType : MimeType
     Body : System.IO.Stream -> Async<unit>
     }
 
@@ -63,6 +99,9 @@ module HttpHandler =
     let askRequest =  HttpHandler (fun req resp -> Some(req,resp))
 
     let setStatus status = modifyResponse (fun resp -> {resp with Status = status})
+
+    let setContentType contentType = modifyResponse (fun resp -> {resp with ContentType = contentType})
+
     let writeToBody f = modifyResponse (fun resp -> {resp with Body = fun s -> async.Bind(resp.Body s, fun _ -> f s)})
 
     let writeBytes b = writeToBody (fun s -> s.AsyncWrite b)

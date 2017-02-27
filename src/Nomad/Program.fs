@@ -1,27 +1,30 @@
 ﻿// Learn more about F# at http://fsharp.org
 namespace Nomad
 
+open HttpHandler
+
 module TestServer =
     let testHandler1 x = handler {
-        do! HttpHandler.setStatus Http.Ok
-        do! HttpHandler.writeText <| sprintf "Hello World! %i" x
+        do! setStatus Http.Ok
+        do! writeText <| sprintf "Hello World! %i" x
         }
 
     let testHandler2 (x, y) = handler {
-        do! HttpHandler.setStatus Http.Ok
-        do! HttpHandler.writeText <| sprintf "Hello Galaxy! %i %i" x y
+        do! setStatus Http.Ok
+        do! writeText <| sprintf "Hello Galaxy! %i %i" x y
         }
 
     let testHandler3 (x, y, z) = handler {
-        do! HttpHandler.setStatus Http.Ok
-        do! HttpHandler.writeText <| sprintf "Hello Universe! %i %i %s" x y z
+        do! setStatus Http.Ok
+        do! setContentType ContentType.``text/html``
+        do! writeText <| sprintf "<p>Hello Universe! %i %i %s</p>" x y z
         }
 
     let testRoutes =
-        HttpHandler.choose [
-            HttpHandler.routeScan "/%i" >>= testHandler1
-            HttpHandler.routeScan "/%i/%i" >>= testHandler2
-            HttpHandler.routeScan "/%i/%i/%s" >>= testHandler3
+        choose [
+            routeScan "/%i" >>= testHandler1
+            routeScan "/%i/%i" >>= testHandler2
+            routeScan "/%i/%i/%s" >>= testHandler3
         ]
 
     [<EntryPoint>]
