@@ -4,21 +4,19 @@ namespace Nomad
 open HttpHandler
 
 module TestServer =
-    let testHandler1 x = handler {
-        do! setStatus Http.Ok
-        do! writeText <| sprintf "Hello World! %i" x
-        }
+    let testHandler1 x = 
+        setStatus Http.Ok 
+        *> writeText (sprintf "Hello World! %i" x)
+        
 
-    let testHandler2 (x, y) = handler {
-        do! setStatus Http.Ok
-        do! writeText <| sprintf "Hello Galaxy! %i %i" x y
-        }
+    let testHandler2 (x, y) =
+        setStatus Http.Ok 
+        *> writeText (sprintf "Hello Galaxy! %i %i" x y)
 
-    let testHandler3 (x, y, z) = handler {
-        do! setStatus Http.Ok
-        do! setContentType ContentType.``text/html``
-        do! writeText <| sprintf "<p>Hello Universe! %i %i %s</p>" x y z
-        }
+    let testHandler3 (x, y, z) = 
+        setStatus Http.Ok 
+        *> setContentType ContentType.``text/html`` 
+        *> writeText (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
 
     let testRoutes =
         choose [

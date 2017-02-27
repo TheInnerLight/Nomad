@@ -120,6 +120,14 @@ module HttpHandler =
             |Some (a, resp') -> runHandler (f a) req resp'
             |None -> None)
 
+    let map f x = 
+        HttpHandler (fun req resp ->
+            match runHandler x req resp with
+            |Some (a, resp') -> Some (f a, resp')
+            |None -> None)
+
+    let apply f  x = bind f (fun fe -> map fe x)
+
     let choose routes =
         HttpHandler (fun req resp ->
             routes
@@ -143,5 +151,10 @@ type HttpHandlerBuilder() =
 [<AutoOpen>]
 module Prelude =
     let handler = HttpHandlerBuilder()
+    let inline (<!>) f x = HttpHandler.map f x
+    let inline (<*>) f x = HttpHandler.apply f x
     let inline (>>=) x f = HttpHandler.bind x f
     let inline (>=>) f g x = f x >>= g
+
+    let inline ( *> ) u v = (fun _ x -> x) <!> u <*> v
+    let inline ( <* ) u v = (fun x _ -> x) <!> u <*> v
