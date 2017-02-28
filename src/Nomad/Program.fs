@@ -18,11 +18,17 @@ module TestServer =
         *> setContentType ContentType.``text/html`` 
         *> writeText (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
 
+    let testHandler4 s = 
+        setStatus Http.BadRequest
+        *> setContentType ContentType.``text/html`` 
+        *> writeText (sprintf "ERROR 400")
+
     let testRoutes =
         choose [
             routeScan "/%i" >>= testHandler1
             routeScan "/%i/%i" >>= testHandler2
             routeScan "/%i/%i/%s" >>= testHandler3
+            routeScan "/%s" >>= testHandler4
         ]
 
     [<EntryPoint>]

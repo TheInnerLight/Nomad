@@ -91,25 +91,29 @@ module Sscanf =
         pf.Value.ToCharArray() // need original string here (possibly with "%%"s)
         |> Array.toList 
         |> getFormatters 
+
     let sscanf (pf:PrintfFormat<_,_,_,_,'t>) s : Result<'t,_> =
         let formatStr = pf.Value.Replace("%%", "%")
         let constants = formatStr.Split(separators, StringSplitOptions.None)
         let regex = Regex("^" + String.Join("(.*?)", constants |> Array.map Regex.Escape) + "$")
         let formatters = formattersFor pf
 
-        let groups = 
-            regex.Match(s).Groups 
-            |> Seq.cast<Group> 
-            |> Seq.skip 1
+        if typeof<'t> = typeof<unit> then Ok(box () :?> 't)
+        else
+            let groups = 
+                regex.Match(s).Groups 
+                |> Seq.cast<Group> 
+                |> Seq.skip 1
 
-        let matches =
-            (groups, formatters)
-            ||> Seq.map2 (fun g f -> g.Value |> parsers.[f])
-            |> Seq.toList
+            let matches =
+                (groups, formatters)
+                ||> Seq.map2 (fun g f -> g.Value |> parsers.[f])
+                |> Seq.toList
 
-        matches
-        |> Result.sequence
-        |> Result.map (fun matches' ->
-            match matches' with
-            |[m] -> m :?> 't
-            |_ -> FSharpValue.MakeTuple(Array.ofList matches', typeof<'t>) :?> 't)
+            matches
+            |> Result.sequence
+            |> Result.bind (fun matches' ->
+                match matches' with
+                |[] -> Error <| ParseException "No matches found"
+                |[m] -> Ok <| (m :?> 't)
+                |_ -> Ok <| (FSharpValue.MakeTuple(Array.ofList matches', typeof<'t>) :?> 't))

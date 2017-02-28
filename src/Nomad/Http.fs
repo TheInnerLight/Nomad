@@ -23,6 +23,15 @@ type TopLevelMime =
 
 type MimeType = {TopLevel : TopLevelMime; SubType : string}
 
+module Async =
+
+    let inline bind x f = async.Bind(x, f)
+
+    let map f x = async.Bind(x, async.Return << f)
+
+    let inline startAsPlainTask (work : Async<unit>) : System.Threading.Tasks.Task = 
+        System.Threading.Tasks.Task.Factory.StartNew(fun () -> work |> Async.RunSynchronously)
+
 module ContentType =
     let asString mimeType =
         let {TopLevel = topLevel; SubType = subType} = mimeType
@@ -60,7 +69,7 @@ type HttpRequest = {
 type HttpResponse = {
     Status : HttpResponseStatus
     ContentType : MimeType
-    Body : System.IO.Stream -> Async<unit>
+    Body : System.IO.Stream -> System.IO.Stream -> Async<unit>
     }
 
 module Http =
@@ -87,7 +96,14 @@ module Http =
 
     let Ok = Success2xx 00
 
+    let BadRequest = ClientError4xx 00
+
+    let Forbidden = ClientError4xx 03
+
+    let UnprocessableEntity = ClientError4xx 22
+
 type HttpHandler<'U> = HttpHandler of (HttpRequest -> HttpResponse -> ('U * HttpResponse) option)
+
 
 module HttpHandler =
     let runHandler = function
@@ -102,11 +118,11 @@ module HttpHandler =
 
     let setContentType contentType = modifyResponse (fun resp -> {resp with ContentType = contentType})
 
-    let writeToBody f = modifyResponse (fun resp -> {resp with Body = fun s -> async.Bind(resp.Body s, fun _ -> f s)})
+    let writeToBody f = modifyResponse (fun resp -> {resp with Body = fun in' out' -> async.Bind(resp.Body in' out', fun _ -> f in' out')})
 
-    let writeBytes b = writeToBody (fun s -> s.AsyncWrite b)
+    let writeBytes bytes = writeToBody (fun in' out' -> out'.AsyncWrite bytes)
 
-    let writeText (t : string) = writeToBody (fun s -> s.AsyncWrite <| System.Text.Encoding.UTF8.GetBytes(t))
+    let writeText (t : string) = writeToBody (fun in' out'  -> out'.AsyncWrite <| System.Text.Encoding.UTF8.GetBytes(t))
 
     let return' x =  HttpHandler (fun _  resp -> Some(x, resp))
 
@@ -155,6 +171,5 @@ module Prelude =
     let inline (<*>) f x = HttpHandler.apply f x
     let inline (>>=) x f = HttpHandler.bind x f
     let inline (>=>) f g x = f x >>= g
-
     let inline ( *> ) u v = (fun _ x -> x) <!> u <*> v
     let inline ( <* ) u v = (fun x _ -> x) <!> u <*> v
