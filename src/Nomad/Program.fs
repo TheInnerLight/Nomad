@@ -2,6 +2,7 @@
 namespace Nomad
 
 open HttpHandler
+open Nomad.Files
 
 module TestServer =
     let testHandler1 x = 
@@ -16,19 +17,20 @@ module TestServer =
     let testHandler3 (x, y, z) = 
         setStatus Http.Ok 
         *> setContentType ContentType.``text/html`` 
-        *> writeText (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
+        *> writeText  (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
 
-    let testHandler4 s = 
-        setStatus Http.BadRequest
-        *> setContentType ContentType.``text/html`` 
-        *> writeText (sprintf "ERROR 400")
+    let testHandler4() =
+        setStatus Http.Ok
+        *> setContentType ContentType.``video/mp4``
+        *> writeFile """test.mp4"""
+
 
     let testRoutes =
         choose [
             routeScan "/%i" >>= testHandler1
             routeScan "/%i/%i" >>= testHandler2
-            routeScan "/%i/%i/%s" >>= testHandler3
-            routeScan "/%s" >>= testHandler4
+            routeScan "/test/%i/%i/%s" >>= testHandler3
+            routeScan "/video.mp4" >>= testHandler4
         ]
 
     [<EntryPoint>]

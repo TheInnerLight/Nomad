@@ -24,6 +24,7 @@ type TopLevelMime =
 type MimeType = {TopLevel : TopLevelMime; SubType : string}
 
 module Async =
+    let inline return' x = async.Return x
 
     let inline bind x f = async.Bind(x, f)
 
@@ -52,6 +53,7 @@ module ContentType =
     let ``text/css`` = {TopLevel = Text; SubType = "css"}
     let ``text/html`` = {TopLevel = Text; SubType = "html"}
     let ``text/plain`` = {TopLevel = Text; SubType = "plain"}
+    let ``video/mp4`` = {TopLevel = Video; SubType = "mp4"}
 
 type HttpResponseStatus =
     |Informational1xx of int
@@ -59,18 +61,6 @@ type HttpResponseStatus =
     |Redirection3xx of int
     |ClientError4xx of int
     |ServerError5xx of int
-
-type HttpRequest = {
-    Method : HttpVerb
-    PathString : string
-    QueryString : string
-    }
-
-type HttpResponse = {
-    Status : HttpResponseStatus
-    ContentType : MimeType
-    Body : System.IO.Stream -> System.IO.Stream -> Async<unit>
-    }
 
 module Http =
     let responseString = function
@@ -102,67 +92,78 @@ module Http =
 
     let UnprocessableEntity = ClientError4xx 22
 
-type HttpHandler<'U> = HttpHandler of (HttpRequest -> HttpResponse -> ('U * HttpResponse) option)
-
+type HttpHandler<'U> = internal HttpHandler of (Microsoft.AspNetCore.Http.HttpContext -> Async<'U option>)
 
 module HttpHandler =
     let runHandler = function
-        |HttpHandler g -> g
+    |HttpHandler g -> g
 
-    let getResponse = HttpHandler (fun _ resp -> Some(resp,resp))
-    let putResponse x = HttpHandler (fun _ resp -> Some((),x))
-    let modifyResponse f = HttpHandler (fun _ resp -> Some((),f resp))
-    let askRequest =  HttpHandler (fun req resp -> Some(req,resp))
+    let askContext = HttpHandler (async.Return << Some)
 
-    let setStatus status = modifyResponse (fun resp -> {resp with Status = status})
+    let withContext f = HttpHandler (async.Return << Some << f)
 
-    let setContentType contentType = modifyResponse (fun resp -> {resp with ContentType = contentType})
+    let withContextAsync f = HttpHandler (Async.map (Some) << f)
 
-    let writeToBody f = modifyResponse (fun resp -> {resp with Body = fun in' out' -> async.Bind(resp.Body in' out', fun _ -> f in' out')})
+    let setContentType contentType = withContext (fun ctx -> ctx.Response.ContentType <- ContentType.asString contentType)
 
-    let writeBytes bytes = writeToBody (fun in' out' -> out'.AsyncWrite bytes)
+    let setStatus status = withContext (fun ctx -> ctx.Response.StatusCode <- Http.responseCode status)
 
-    let writeText (t : string) = writeToBody (fun in' out'  -> out'.AsyncWrite <| System.Text.Encoding.UTF8.GetBytes(t))
+    let writeBytes bytes = withContextAsync (fun ctx -> ctx.Response.Body.AsyncWrite bytes)
 
-    let return' x =  HttpHandler (fun _  resp -> Some(x, resp))
+    let writeText (text : string) = withContextAsync (fun ctx -> ctx.Response.Body.AsyncWrite <| System.Text.Encoding.UTF8.GetBytes(text))
 
-    let zero =  HttpHandler (fun _  resp -> Some((), resp))
+    let unhandled = HttpHandler (fun _ -> Async.return' None)
 
-    let unhandled = HttpHandler (fun _  _ -> None)
+    let return' x =  HttpHandler (fun _  -> Async.return' <| Some x)
 
-    let bind x f = 
-        HttpHandler (fun req resp ->
-            match runHandler x req resp with
-            |Some (a, resp') -> runHandler (f a) req resp'
-            |None -> None)
+    let liftAsync x = HttpHandler (fun _ -> Async.map Some x)
 
-    let map f x = 
-        HttpHandler (fun req resp ->
-            match runHandler x req resp with
-            |Some (a, resp') -> Some (f a, resp')
-            |None -> None)
+    let bind x f = HttpHandler (fun ctx ->
+        Async.bind (runHandler x ctx) (fun x' ->
+            match x' with
+            |Some(value) -> runHandler (f value) ctx
+            |None -> Async.return' None))
 
-    let apply f  x = bind f (fun fe -> map fe x)
+    let map f x = HttpHandler (fun ctx ->
+        Async.bind (runHandler x ctx) (fun x' ->
+            match x' with
+            |Some(value) -> Async.return' <| Some (f value) 
+            |None -> Async.return' None))
+
+    let apply f x = bind f (fun fe -> map fe x)
 
     let choose routes =
-        HttpHandler (fun req resp ->
-            routes
-            |> Seq.map (fun h -> runHandler h req resp)
-            |> Seq.find (Option.isSome))
+        let rec firstM routes ctx =
+            async{
+                match routes with
+                |[] -> return None
+                |route::routes' ->
+                    let! route = runHandler route ctx
+                    match route with
+                    |Some value -> return Some(value)
+                    |None -> return! firstM routes' ctx
+            }
+        HttpHandler (fun ctx -> firstM routes ctx)
 
     let routeScan pattern =
-        let binder req =
-            match Sscanf.sscanf pattern req.PathString with
-            |Ok result -> return' result
+        let binder (ctx : Microsoft.AspNetCore.Http.HttpContext) =
+            match Sscanf.sscanf pattern (ctx.Request.Path.Value) with
+            |Ok result -> return' <| result
             |Error _ -> unhandled
-        bind askRequest binder
+        bind askContext binder
 
 type HttpHandlerBuilder() =
-
     member this.Return x = HttpHandler.return' x
     member this.ReturnFrom x : HttpHandler<'U> = x
     member this.Bind (x, f) = HttpHandler.bind x f
-    member this.Zero() = HttpHandler.zero
+    member this.TryFinally(body, compensation) =
+        HttpHandler (fun ctx ->
+            async.TryFinally(HttpHandler.runHandler body ctx, compensation))
+    member this.Using(disposable:#System.IDisposable, body) =
+        this.TryFinally(body disposable, fun () -> if isNull disposable then () else disposable.Dispose())
+
+
+    //member this.Zero() = HttpHandler.zero
 
 [<AutoOpen>]
 module Prelude =

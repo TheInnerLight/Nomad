@@ -16,16 +16,10 @@ open Microsoft.FSharp.Reflection
 type NomadConfig = {RouteConfig : HttpHandler<unit>}
 
 module Nomad =
-    let runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
-        let reqType = Http.requestMethod <| ctx.Request.Method
-        let req' = {Method = reqType; PathString = ctx.Request.Path.Value; QueryString = ctx.Request.QueryString.Value}
-        match HttpHandler.runHandler handler req' {Status = ClientError4xx(04); ContentType = ContentType.``text/plain``; Body = fun _ _ -> async.Return() } with
-        |Some (_,resp) ->
-            ctx.Response.StatusCode <- Http.responseCode resp.Status
-            ctx.Response.Headers.Add("Content-Type", StringValues(ContentType.asString resp.ContentType))
-            resp.Body ctx.Request.Body ctx.Response.Body
-            |> Async.startAsPlainTask
-        |None -> async.Return () |> Async.startAsPlainTask
+    let runContextWith handler (ctx : Microsoft.AspNetCore.Http.HttpContext) : System.Threading.Tasks.Task =
+        HttpHandler.runHandler handler ctx
+        |> Async.map (ignore)
+        |> Async.startAsPlainTask
 
     let run nc =
         WebHostBuilder()

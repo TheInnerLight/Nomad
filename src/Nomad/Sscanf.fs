@@ -93,13 +93,14 @@ module Sscanf =
         |> getFormatters 
 
     let sscanf (pf:PrintfFormat<_,_,_,_,'t>) s : Result<'t,_> =
-        let formatStr = pf.Value.Replace("%%", "%")
-        let constants = formatStr.Split(separators, StringSplitOptions.None)
-        let regex = Regex("^" + String.Join("(.*?)", constants |> Array.map Regex.Escape) + "$")
-        let formatters = formattersFor pf
-
-        if typeof<'t> = typeof<unit> then Ok(box () :?> 't)
+        if pf.Value = s then
+            Ok <| (box () :?> 't)
         else
+            let formatStr = pf.Value.Replace("%%", "%")
+            let constants = formatStr.Split(separators, StringSplitOptions.None)
+            let regex = Regex("^" + String.Join("(.*?)", constants |> Array.map Regex.Escape) + "$")
+            let formatters = formattersFor pf
+
             let groups = 
                 regex.Match(s).Groups 
                 |> Seq.cast<Group> 
@@ -114,6 +115,6 @@ module Sscanf =
             |> Result.sequence
             |> Result.bind (fun matches' ->
                 match matches' with
-                |[] -> Error <| ParseException "No matches found"
+                |[] -> Error <| ParseException "Failed to parse"
                 |[m] -> Ok <| (m :?> 't)
                 |_ -> Ok <| (FSharpValue.MakeTuple(Array.ofList matches', typeof<'t>) :?> 't))
