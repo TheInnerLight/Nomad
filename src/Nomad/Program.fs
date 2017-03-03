@@ -1,8 +1,9 @@
 ﻿// Learn more about F# at http://fsharp.org
 namespace Nomad
 
-open HttpHandler
 open Nomad.Files
+open HttpHandler
+
 
 module TestServer =
     let testHandler1 x = 

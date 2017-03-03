@@ -8,6 +8,7 @@
             "includeFiles": [
                 "Sscanf.fs",
                 "Http.fs",
+                "Headers.fs",
                 "File.fs",
                 "Nomad.fs",
                 "Program.fs"

@@ -19,7 +19,6 @@ module FilePart =
         |Complete -> 0L
         |Part (start', _) -> min maxStart start'
 
-[<AutoOpen>]
 module HttpHandler =
     let private writePartialFile filePart file = 
         handler {
