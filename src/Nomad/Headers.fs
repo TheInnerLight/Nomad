@@ -44,13 +44,13 @@ module HttpHeaders =
                 |_                                                       -> Result.Error <| ParseException "Failed to parse range header"
             |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
 
-    let acceptHeader = function
+    let tryGetAccept = function
         |HttpHeaders headers ->
             headers.Accept
             |> Option.ofObj
             |> Option.map (Seq.sortByDescending snd << Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType},Option.ofNullable x.Quality))
 
-    let acceptCharset = function
+    let tryGetAcceptCharset = function
         |HttpHeaders headers ->
             headers.AcceptCharset
             |> Option.ofObj
