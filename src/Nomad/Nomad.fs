@@ -19,7 +19,7 @@ module Nomad =
     let runContextWith handler (ctx : Microsoft.AspNetCore.Http.HttpContext) : System.Threading.Tasks.Task =
         HttpHandler.runHandler handler ctx
         |> Async.map (ignore)
-        |> Async.startAsPlainTask
+        |> Async.startAsPlainTaskWithCancellation ctx.RequestAborted
 
     let run nc =
         WebHostBuilder()

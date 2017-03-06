@@ -18,7 +18,14 @@ module Async =
     let map f x = async.Bind(x, async.Return << f)
 
     let inline startAsPlainTask (work : Async<unit>) : System.Threading.Tasks.Task = 
+        
         System.Threading.Tasks.Task.Factory.StartNew(fun () -> work |> Async.RunSynchronously)
+
+    let inline startAsPlainTaskWithCancellation cancellationToken (work : Async<unit>) : System.Threading.Tasks.Task = 
+        Async
+            .StartAsTask(work, cancellationToken = cancellationToken)
+            .ContinueWith(System.Action<System.Threading.Tasks.Task<unit>>(ignore))
+        
 
 type HttpResponseStatus =
     |Informational1xx of int

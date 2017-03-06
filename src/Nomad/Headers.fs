@@ -10,7 +10,7 @@ module private HeaderParsers =
     let inline (!>>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)
 
     module RangeParsers =
-        let pRangeUnit<'a> : Parser<_, 'a>  = pstring "Range:" >>. manyCharsTill anyChar (pchar '=')
+        let pRangeUnit<'a> : Parser<_, 'a>  = manyCharsTill anyChar (pchar '=')
 
         let int64OrEof<'a> : Parser<_, 'a> = spaces >>. ((attempt pint64 |>> Some) <|> (eof |>> (fun _ -> None)))
 
