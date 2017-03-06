@@ -47,9 +47,14 @@ module HttpHeaders =
     let acceptHeader = function
         |HttpHeaders headers ->
             headers.Accept
-            |> Seq.map (fun x -> 
-                {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
-            |> Seq.sortByDescending snd
+            |> Option.ofObj
+            |> Option.map (Seq.sortByDescending snd << Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType},Option.ofNullable x.Quality))
+
+    let acceptCharset = function
+        |HttpHeaders headers ->
+            headers.AcceptCharset
+            |> Option.ofObj
+            |> Option.map (Seq.sortByDescending snd << Seq.map (fun x -> x.Value, Option.ofNullable x.Quality))
 
                 
 
