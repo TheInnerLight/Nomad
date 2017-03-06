@@ -1,6 +1,7 @@
 namespace Nomad
 
 open System.IO
+open Microsoft.AspNetCore.Http
 
 type HttpVerb =
     |Get
@@ -8,20 +9,6 @@ type HttpVerb =
     |Put
     |Patch
     |Delete
-
-type TopLevelMime =
-    |Application
-    |Audio
-    |Example
-    |Font
-    |Image
-    |Message
-    |Model
-    |Multipart
-    |Text
-    |Video
-
-type MimeType = {TopLevel : TopLevelMime; SubType : string}
 
 module Async =
     let inline return' x = async.Return x
@@ -32,28 +19,6 @@ module Async =
 
     let inline startAsPlainTask (work : Async<unit>) : System.Threading.Tasks.Task = 
         System.Threading.Tasks.Task.Factory.StartNew(fun () -> work |> Async.RunSynchronously)
-
-module ContentType =
-    let asString mimeType =
-        let {TopLevel = topLevel; SubType = subType} = mimeType
-        match topLevel with
-            |Application    -> sprintf "application/%s" subType
-            |Audio          -> sprintf "audio/%s" subType
-            |Example        -> sprintf "example/%s" subType
-            |Font           -> sprintf "font/%s" subType
-            |Image          -> sprintf "image/%s" subType
-            |Message        -> sprintf "message/%s" subType
-            |Model          -> sprintf "model/%s" subType
-            |Multipart      -> sprintf "multipart/%s" subType
-            |Text           -> sprintf "text/%s" subType
-            |Video          -> sprintf "video/%s" subType
-
-    let ``application/json`` = {TopLevel = Application; SubType = "json"}
-    let ``application/xml`` = {TopLevel = Application; SubType = "xml"}
-    let ``text/css`` = {TopLevel = Text; SubType = "css"}
-    let ``text/html`` = {TopLevel = Text; SubType = "html"}
-    let ``text/plain`` = {TopLevel = Text; SubType = "plain"}
-    let ``video/mp4`` = {TopLevel = Video; SubType = "mp4"}
 
 type HttpResponseStatus =
     |Informational1xx of int
@@ -92,7 +57,11 @@ module Http =
 
     let UnprocessableEntity = ClientError4xx 22
 
+[<Struct>]
 type HttpHandler<'U> = internal HttpHandler of (Microsoft.AspNetCore.Http.HttpContext -> Async<'U option>)
+
+[<Struct>]
+type HttpHeaders = internal HttpHeaders of Microsoft.AspNetCore.Http.Headers.RequestHeaders
 
 module HttpHandler =
     let runHandler = function
@@ -103,6 +72,8 @@ module HttpHandler =
     let withContext f = HttpHandler (async.Return << Some << f)
 
     let withContextAsync f = HttpHandler (Async.map (Some) << f)
+
+    let getReqHeaders = withContext (fun ctx -> HttpHeaders <| ctx.Request.GetTypedHeaders())
 
     let setContentType contentType = withContext (fun ctx -> ctx.Response.ContentType <- ContentType.asString contentType)
 

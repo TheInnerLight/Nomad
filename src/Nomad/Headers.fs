@@ -6,7 +6,7 @@ open FParsec
 
 exception HeaderNotFoundException of string
 
-module HeaderParsers =
+module private HeaderParsers =
     let inline (!>>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)
 
     module RangeParsers =
@@ -24,18 +24,32 @@ type RangeHeader =
     |StartOnlyRange of string * int64
     |StartEndRanges of string * (int64*int64) list
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module HttpHeaders =
     open HeaderParsers.RangeParsers
 
-    let tryParseRangeHeader (headers : IHeaderDictionary) =
-        match headers.TryGetValue("Range") with
-        |true, headerStrVals ->
-            let headerStr : string = !>> headerStrVals
-            match run (tuple3 pRangeUnit firstRange nextRanges) (headerStr) with
-            |Success ((units, (start', None), []), _, _)             -> Result.Ok <| StartOnlyRange (units, start')
-            |Success ((units, (start', Some end'), []), _, _)        -> Result.Ok <| StartEndRanges (units, [start', end'])
-            |Success ((units, (start', Some end'), startEnds), _, _) -> Result.Ok <| StartEndRanges (units, (start', end') :: startEnds)
-            |_ -> Result.Error <| ParseException "Failed to parse range header"
-        |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
+    let tryParseRangeHeader = function
+        |HttpHeaders headers ->
+            match headers.Headers.TryGetValue("Range") with
+            |true, headerStrVals ->
+                let headerStr : string = !>> headerStrVals
+                match run (tuple3 pRangeUnit firstRange nextRanges) (headerStr) with
+                // matches patterns such as Range: bytes=0-
+                |Success ((units, (start', None), []), _, _)             -> Result.Ok <| StartOnlyRange (units, start')
+                // matches patterns such as Range: bytes=0-1023
+                |Success ((units, (start', Some end'), []), _, _)        -> Result.Ok <| StartEndRanges (units, [start', end'])
+                // matches patterns such as Range: bytes=0-1023,4096-65535,..
+                |Success ((units, (start', Some end'), startEnds), _, _) -> Result.Ok <| StartEndRanges (units, (start', end') :: startEnds)
+                // anything else is a parse failure
+                |_                                                       -> Result.Error <| ParseException "Failed to parse range header"
+            |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
+
+    let acceptHeader = function
+        |HttpHeaders headers ->
+            headers.Accept
+            |> Seq.map (fun x -> 
+                {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
+            |> Seq.sortByDescending snd
+
                 
 

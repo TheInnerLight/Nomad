@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Sscanf.fs" />
+    <Compile Include="ContentType.fs" />
     <Compile Include="Http.fs" />
     <Compile Include="Headers.fs" />
     <Compile Include="File.fs" />
