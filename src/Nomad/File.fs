@@ -20,18 +20,21 @@ module FilePart =
         |Part (start', _) -> min maxStart start'
 
 module HttpHandler =
+    [<Literal>]
+    let DEFAULT_BUFFER_SIZE = 262144L
+
     let private writePartialFile filePart file = 
         handler {
             use fs = new System.IO.FileStream (file, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)
             let end' = FilePart.getLengthOrDefault fs.Length filePart
             let rec writeFileRec pos = handler {
-                let dataLength = int <| min 262144L (end'-pos)
+                let dataLength = int <| min DEFAULT_BUFFER_SIZE (end'-pos)
                 match dataLength with
                 |x when x <= 0 -> return ()
                 |_ ->
                     let! data  = HttpHandler.liftAsync (fs.AsyncRead dataLength)
                     do! HttpHandler.writeBytes data
-                    return! writeFileRec (pos+262144L)
+                    return! writeFileRec (pos + DEFAULT_BUFFER_SIZE)
                 }
             return! writeFileRec (FilePart.getStartOrDefault fs.Length filePart)
         }

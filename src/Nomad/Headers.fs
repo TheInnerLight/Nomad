@@ -46,15 +46,36 @@ module HttpHeaders =
 
     let tryGetAccept = function
         |HttpHeaders headers ->
-            headers.Accept
-            |> Option.ofObj
-            |> Option.map (Seq.sortByDescending snd << Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType},Option.ofNullable x.Quality))
+            match headers.Headers.TryGetValue("Accept") with
+            |true, headerStrVal ->
+                match Microsoft.Net.Http.Headers.MediaTypeHeaderValue.TryParseList(headerStrVal) with
+                |true, mediaType ->
+                    mediaType
+                    |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
+                    |> Seq.sortByDescending snd
+                    |> List.ofSeq
+                    |> Result.Ok
+                |_ -> Result.Error <| ParseException "Failed to parse accept header"
+            |_ -> Result.Error <| HeaderNotFoundException "Accept header was not found"
 
-    let tryGetAcceptCharset = function
+    let tryGetStringWithQuality name = function
         |HttpHeaders headers ->
-            headers.AcceptCharset
-            |> Option.ofObj
-            |> Option.map (Seq.sortByDescending snd << Seq.map (fun x -> x.Value, Option.ofNullable x.Quality))
+            match headers.Headers.TryGetValue(name) with
+            |true, headerStrVal ->
+                match Microsoft.Net.Http.Headers.StringWithQualityHeaderValue.TryParseList(headerStrVal) with
+                |true, stringQals ->
+                    stringQals
+                    |> Seq.map (fun x -> x.Value, Option.ofNullable x.Quality)
+                    |> Seq.sortByDescending snd
+                    |> List.ofSeq
+                    |> Result.Ok
+                |_ -> Result.Error << ParseException <| sprintf "Failed to parse %s header" name
+            |_ -> Result.Error << ParseException <| sprintf  "%s header was not found" name
 
+    let tryGetAcceptCharset = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptCharset
+
+    let tryGetAcceptEncoding = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptEncoding
+
+    let tryGetAcceptLanguage = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptLanguage
                 
 
