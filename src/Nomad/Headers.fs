@@ -2,6 +2,7 @@ namespace Nomad
 
 open System.IO
 open Microsoft.AspNetCore.Http
+open Microsoft.Net.Http.Headers
 open FParsec
 
 exception HeaderNotFoundException of string
@@ -24,9 +25,40 @@ type RangeHeader =
     |StartOnlyRange of string * int64
     |StartEndRanges of string * (int64*int64) list
 
+module private InlineHeaderParsers =
+    let inline tryParseHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> inputs =
+        let res = ref Unchecked.defaultof<'T>
+        if ((^T) : (static member TryParse : string * byref< ^ T > -> bool) (inputs, &res.contents)) then
+            Result.Ok !res
+        else 
+            Result.Error <| ParseException "Failed to parse header"
+
+    let inline tryParseHeaderList< ^T when ^T : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T >> -> bool)> inputs =
+        let res = ref Unchecked.defaultof<System.Collections.Generic.IList<'T>>
+        if ((^T) : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T >> -> bool) (inputs, &res.contents)) then
+            Result.Ok !res
+        else 
+            Result.Error <| ParseException "Failed to parse header"
+
+    let inline tryGetHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> name = function
+        |HttpHeaders headers ->
+            match headers.Headers.TryGetValue(name) with
+            |true, headerStrVals ->
+                let headerStr : string = !>> headerStrVals
+                tryParseHeader< ^T > headerStr
+            |_ -> Result.Error << HeaderNotFoundException <| sprintf  "%s header was not found" name
+                                                
+    let inline tryGetHeaderList< ^T when ^T : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T>> -> bool)> name = function
+        |HttpHeaders headers ->
+            match headers.Headers.TryGetValue(name) with
+            |true, headerStrVals ->
+                tryParseHeaderList< ^T > headerStrVals
+            |_ -> Result.Error << HeaderNotFoundException <| sprintf  "%s header was not found" name
+
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module HttpHeaders =
     open HeaderParsers.RangeParsers
+    open InlineHeaderParsers
 
     let tryParseRangeHeader = function
         |HttpHeaders headers ->
@@ -44,38 +76,29 @@ module HttpHeaders =
                 |_                                                       -> Result.Error <| ParseException "Failed to parse range header"
             |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
 
-    let tryGetAccept = function
-        |HttpHeaders headers ->
-            match headers.Headers.TryGetValue("Accept") with
-            |true, headerStrVal ->
-                match Microsoft.Net.Http.Headers.MediaTypeHeaderValue.TryParseList(headerStrVal) with
-                |true, mediaType ->
-                    mediaType
-                    |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
-                    |> Seq.sortByDescending snd
-                    |> List.ofSeq
-                    |> Result.Ok
-                |_ -> Result.Error <| ParseException "Failed to parse accept header"
-            |_ -> Result.Error <| HeaderNotFoundException "Accept header was not found"
+    let tryGetAccept headers = 
+        tryGetHeaderList<Microsoft.Net.Http.Headers.MediaTypeHeaderValue> (Microsoft.Net.Http.Headers.HeaderNames.Accept) headers
+        |> Result.map (fun mediaType ->
+                mediaType
+                |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
+                |> Seq.sortByDescending snd
+                |> List.ofSeq)
 
-    let tryGetStringWithQuality name = function
-        |HttpHeaders headers ->
-            match headers.Headers.TryGetValue(name) with
-            |true, headerStrVal ->
-                match Microsoft.Net.Http.Headers.StringWithQualityHeaderValue.TryParseList(headerStrVal) with
-                |true, stringQals ->
-                    stringQals
-                    |> Seq.map (fun x -> x.Value, Option.ofNullable x.Quality)
-                    |> Seq.sortByDescending snd
-                    |> List.ofSeq
-                    |> Result.Ok
-                |_ -> Result.Error << ParseException <| sprintf "Failed to parse %s header" name
-            |_ -> Result.Error << ParseException <| sprintf  "%s header was not found" name
+    let tryGetStringWithQuality name headers =
+        tryGetHeaderList<Microsoft.Net.Http.Headers.StringWithQualityHeaderValue> name headers
+        |> Result.map (fun stringQals ->
+            stringQals
+            |> Seq.map (fun x -> x.Value, Option.ofNullable x.Quality)
+            |> Seq.sortByDescending snd
+            |> List.ofSeq)
 
     let tryGetAcceptCharset = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptCharset
 
     let tryGetAcceptEncoding = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptEncoding
 
     let tryGetAcceptLanguage = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptLanguage
+
+    let tryGetContentRange header = 
+        tryGetHeader<Microsoft.Net.Http.Headers.ContentRangeHeaderValue> Microsoft.Net.Http.Headers.HeaderNames.ContentRange header
                 
 
