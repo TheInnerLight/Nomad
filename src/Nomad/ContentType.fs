@@ -43,6 +43,7 @@ module TopLevelMime =
         |Video          -> "video"
         |Other(topType) -> topType
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module ContentType =
     let asString mimeType =
         let {TopLevel = topLevel; SubType = subType} = mimeType

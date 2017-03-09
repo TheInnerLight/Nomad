@@ -25,6 +25,12 @@ type RangeHeader =
     |StartOnlyRange of string * int64
     |StartEndRanges of string * (int64*int64) list
 
+type Cookie =
+    {
+        Name : string
+        Value : string
+    }
+
 module private InlineHeaderParsers =
     let inline tryParseHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> inputs =
         let res = ref Unchecked.defaultof<'T>
@@ -77,7 +83,7 @@ module HttpHeaders =
             |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
 
     let tryGetAccept headers = 
-        tryGetHeaderList<Microsoft.Net.Http.Headers.MediaTypeHeaderValue> (Microsoft.Net.Http.Headers.HeaderNames.Accept) headers
+        tryGetHeaderList<MediaTypeHeaderValue> (HeaderNames.Accept) headers
         |> Result.map (fun mediaType ->
                 mediaType
                 |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
@@ -85,20 +91,22 @@ module HttpHeaders =
                 |> List.ofSeq)
 
     let tryGetStringWithQuality name headers =
-        tryGetHeaderList<Microsoft.Net.Http.Headers.StringWithQualityHeaderValue> name headers
+        tryGetHeaderList<StringWithQualityHeaderValue> name headers
         |> Result.map (fun stringQals ->
             stringQals
             |> Seq.map (fun x -> x.Value, Option.ofNullable x.Quality)
             |> Seq.sortByDescending snd
             |> List.ofSeq)
 
-    let tryGetAcceptCharset = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptCharset
+    let tryGetAcceptCharset = tryGetStringWithQuality HeaderNames.AcceptCharset
 
-    let tryGetAcceptEncoding = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptEncoding
+    let tryGetAcceptEncoding = tryGetStringWithQuality HeaderNames.AcceptEncoding
 
-    let tryGetAcceptLanguage = tryGetStringWithQuality Microsoft.Net.Http.Headers.HeaderNames.AcceptLanguage
+    let tryGetAcceptLanguage = tryGetStringWithQuality HeaderNames.AcceptLanguage
 
     let tryGetContentRange header = 
-        tryGetHeader<Microsoft.Net.Http.Headers.ContentRangeHeaderValue> Microsoft.Net.Http.Headers.HeaderNames.ContentRange header
-                
+        tryGetHeader<ContentRangeHeaderValue> HeaderNames.ContentRange header
 
+    let tryGetCookie header =
+        tryGetHeaderList<CookieHeaderValue> HeaderNames.Cookie header
+        |> Result.map (List.ofSeq << Seq.map (fun cookie -> {Name = cookie.Name; Value = cookie.Value}))

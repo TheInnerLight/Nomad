@@ -8,13 +8,6 @@
     <PackageTargetFallback>portable-net45+win8</PackageTargetFallback>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Sscanf.fs" />
-    <Compile Include="ContentType.fs" />
-    <Compile Include="Http.fs" />
-    <Compile Include="Headers.fs" />
-    <Compile Include="File.fs" />
-    <Compile Include="Nomad.fs" />
-    <Compile Include="Program.fs" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.1" PrivateAssets="All" />
     <PackageReference Include="FSharp.Core" Version="4.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="1.1.0" />
@@ -27,8 +20,13 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Primitives" Version="1.1.0" />
     <PackageReference Include="FParsec" Version="1.0.2" />
-    <Content Include="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Compile Include="Sscanf.fs" />
+    <Compile Include="ContentType.fs" />
+    <Compile Include="Async.fs" />
+    <Compile Include="Http.fs" />
+    <Compile Include="Headers.fs" />
+    <Compile Include="File.fs" />
+    <Compile Include="Nomad.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

@@ -11,8 +11,6 @@ open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Primitives
 open Microsoft.FSharp.Reflection
 
- 
-
 type NomadConfig = {RouteConfig : HttpHandler<unit>}
 
 module Nomad =
