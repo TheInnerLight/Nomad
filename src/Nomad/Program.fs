@@ -19,6 +19,7 @@ module TestServer =
         setStatus Http.Ok 
         *> setContentType ContentType.``text/html`` 
         *> writeText  (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
+        |> deriveContentLength
 
     let testHandler4() =
         setStatus Http.Ok

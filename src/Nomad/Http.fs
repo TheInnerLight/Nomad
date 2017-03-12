@@ -57,6 +57,8 @@ module HttpHandler =
     let runHandler = function
     |HttpHandler g -> g
 
+
+
     let askContext = HttpHandler (async.Return << Some)
 
     let withContext f = HttpHandler (async.Return << Some << f)
@@ -112,6 +114,21 @@ module HttpHandler =
             |Ok result -> return' <| result
             |Error _ -> unhandled
         bind askContext binder
+
+    let deriveContentLength handler = HttpHandler (fun ctx ->
+        let oldBody = ctx.Response.Body
+        let newBody = new System.IO.MemoryStream()
+        ctx.Response.Body <- newBody
+        let result = runHandler handler ctx
+
+        Async.bind result (fun res ->
+            ctx.Response.ContentLength <- System.Nullable(newBody.Length)
+            ctx.Response.Body <- oldBody
+            newBody.Position <- 0L
+            let copy =
+                newBody.CopyToAsync oldBody
+                |> Async.AwaitTask
+            Async.bind copy (fun _ -> Async.return' res)))
 
 type HttpHandlerBuilder() =
     member this.Return x = HttpHandler.return' x
