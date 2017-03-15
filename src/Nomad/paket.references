@@ -1,0 +1,12 @@
+FSharp.Core
+Microsoft.AspNetCore.Server.Kestrel
+Microsoft.AspNetCore.Routing
+Microsoft.AspNetCore.Http
+Microsoft.AspNetCore.Authentication
+Microsoft.AspNetCore.Authentication.Google
+Microsoft.AspNetCore.Identity
+Microsoft.AspNetCore.Diagnostics
+Microsoft.Extensions.Configuration
+Microsoft.Extensions.Primitives
+FParsec
+System.ValueTuple

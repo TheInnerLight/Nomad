@@ -1,0 +1,33 @@
+source https://nuget.org/api/v2
+
+nuget FSharp.Core redirects: force
+nuget Microsoft.AspNetCore.Server.Kestrel ~> 1.1
+nuget Microsoft.AspNetCore.Routing ~> 1.1
+nuget Microsoft.AspNetCore.Http ~> 1.1
+nuget Microsoft.AspNetCore.Authentication ~> 1.1
+nuget Microsoft.AspNetCore.Authentication.Google ~> 1.1
+nuget Microsoft.AspNetCore.Identity ~> 1.1
+nuget Microsoft.AspNetCore.Diagnostics ~> 1.1
+nuget Microsoft.Extensions.Configuration ~> 1.1
+nuget Microsoft.Extensions.Primitives ~> 1.1
+nuget FParsec ~> 1.0.2
+nuget System.ValueTuple 4.3.0 framework: >= net452
+
+
+group Build
+  source https://nuget.org/api/v2
+  nuget FAKE
+  nuget SourceLink.Fake
+  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  nuget FSharp.Formatting
+
+group Test
+  source https://nuget.org/api/v2
+  nuget xunit.runner.console
+  nuget FsCheck 2.2.4
+  nuget FsCheck.Xunit 2.2.4
+  nuget xunit 2.1.0
+  nuget xunit.abstractions 2.0.0
+  nuget xunit.assert 2.1.0
+  nuget xunit.core 2.1.0
+  nuget xunit.extensibility.execution 2.1.0

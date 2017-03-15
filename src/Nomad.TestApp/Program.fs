@@ -4,12 +4,10 @@ namespace Nomad
 open Nomad.Files
 open HttpHandler
 
-
 module TestServer =
     let testHandler1 x = 
         setStatus Http.Ok 
         *> writeText (sprintf "Hello World! %i" x)
-        
 
     let testHandler2 (x, y) =
         setStatus Http.Ok 
@@ -24,7 +22,12 @@ module TestServer =
     let testHandler4() =
         setStatus Http.Ok
         *> setContentType ContentType.``video/mp4``
-        *> writeFile """test.mp4"""
+        *> getReqHeaders
+        >>= (fun x -> 
+            match HttpHeaders.tryParseRangeHeader x with
+            |Ok range -> writeFile """movie.mp4"""
+            |Error err -> return' ())
+
 
 
     let testRoutes =
