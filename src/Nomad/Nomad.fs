@@ -14,10 +14,9 @@ open Microsoft.FSharp.Reflection
 type NomadConfig = {RouteConfig : HttpHandler<unit>}
 
 module Nomad =
-    let runContextWith handler (ctx : Microsoft.AspNetCore.Http.HttpContext) : System.Threading.Tasks.Task =
-        HttpHandler.runHandler handler ctx
-        |> Async.map (ignore)
-        |> Async.startAsPlainTaskWithCancellation ctx.RequestAborted
+
+    let runInt nc ctx =
+        HttpHandler.runContextWith (nc.RouteConfig) ctx
 
     let run nc =
         WebHostBuilder()
@@ -26,6 +25,7 @@ module Nomad =
             .Configure(fun app -> 
                 app
                     .UseDeveloperExceptionPage()
-                    .Run (fun ctx -> runContextWith (nc.RouteConfig) ctx))
+                    .Run (fun ctx -> runInt nc ctx))
+                        
             .Build()
             .Run()

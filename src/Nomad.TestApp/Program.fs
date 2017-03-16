@@ -8,6 +8,7 @@ module TestServer =
     let testHandler1 x = 
         setStatus Http.Ok 
         *> writeText (sprintf "Hello World! %i" x)
+        |> authenticated
 
     let testHandler2 (x, y) =
         setStatus Http.Ok 

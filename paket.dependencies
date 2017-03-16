@@ -1,6 +1,6 @@
 source https://nuget.org/api/v2
 
-nuget FSharp.Core redirects: force
+nuget FSharp.Core ~> 4.1 redirects: force
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 1.1
 nuget Microsoft.AspNetCore.Routing ~> 1.1
 nuget Microsoft.AspNetCore.Http ~> 1.1
