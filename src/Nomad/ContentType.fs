@@ -51,6 +51,7 @@ module ContentType =
 
     let ``application/json`` = {TopLevel = Application; SubType = "json"}
     let ``application/xml`` = {TopLevel = Application; SubType = "xml"}
+    let ``image/png`` = {TopLevel = Image; SubType = "png"}
     let ``text/css`` = {TopLevel = Text; SubType = "css"}
     let ``text/html`` = {TopLevel = Text; SubType = "html"}
     let ``text/plain`` = {TopLevel = Text; SubType = "plain"}

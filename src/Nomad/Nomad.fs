@@ -10,13 +10,18 @@ open Microsoft.AspNetCore.Routing
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Primitives
 open Microsoft.FSharp.Reflection
+open Nomad.Files
+open HttpHandler
+
 
 type NomadConfig = {RouteConfig : HttpHandler<unit>}
 
 module Nomad =
 
-    let runInt nc ctx =
-        HttpHandler.runContextWith (nc.RouteConfig) ctx
+    let runInt nc (ctx : HttpContext) =
+        ctx.Response.Headers.["Server"] <- (StringValues "Nomad")
+        runContextWith (nc.RouteConfig) ctx
+        
 
     let run nc =
         WebHostBuilder()

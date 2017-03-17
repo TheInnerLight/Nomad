@@ -2,7 +2,9 @@
 namespace Nomad
 
 open Nomad.Files
+open Nomad.Authentication
 open HttpHandler
+
 
 module TestServer =
     let testHandler1 x = 
@@ -37,6 +39,7 @@ module TestServer =
             routeScan "/%i/%i" >>= testHandler2
             routeScan "/test/%i/%i/%s" >>= testHandler3
             routeScan "/video.mp4" >>= testHandler4
+            Responses.``Not Found``
         ]
 
     [<EntryPoint>]

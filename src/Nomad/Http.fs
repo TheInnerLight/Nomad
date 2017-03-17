@@ -45,6 +45,8 @@ module Http =
 
     let Forbidden = ClientError4xx 03
 
+    let NotFound = ClientError4xx 04
+
     let UnprocessableEntity = ClientError4xx 22
 
 [<Struct>]
@@ -53,14 +55,12 @@ type HandleState<'T> =
     |ShortCircuit
 
 [<Struct>]
-type HttpHandler<'U> = internal HttpHandler of (Microsoft.AspNetCore.Http.HttpContext -> Async<HandleState<'U>>)
+type HttpHandler<'U> = internal HttpHandler of (HttpContext -> Async<HandleState<'U>>)
 
 [<Struct>]
-type HttpHeaders = internal HttpHeaders of Microsoft.AspNetCore.Http.Headers.RequestHeaders
+type HttpHeaders = internal HttpHeaders of Headers.RequestHeaders
 
-
-
-module private InternalHandlers =
+module internal InternalHandlers =
     let askContext = HttpHandler (async.Return << Continue)
 
     let inline withContext f = HttpHandler (async.Return << Continue << f)
@@ -89,7 +89,7 @@ module HttpHandler =
 
     let liftAsync x = HttpHandler (fun _ -> Async.map Continue x)
 
-    let bind x f = HttpHandler (fun ctx ->
+    let bind f x = HttpHandler (fun ctx ->
         InternalHandlers.runHandler x ctx
         |> Async.bind (fun x' ->
             match x' with
@@ -103,7 +103,7 @@ module HttpHandler =
             |Continue(value) -> Async.return' <| Continue (f value) 
             |ShortCircuit -> Async.return' ShortCircuit))
 
-    let apply f x = bind f (fun fe -> map fe x)
+    let apply f x = bind (fun fe -> map fe x) f
 
     let choose routes =
         let rec firstM routes ctx =
@@ -123,7 +123,7 @@ module HttpHandler =
             match Sscanf.sscanf pattern (ctx.Request.Path.Value) with
             |Ok result -> return' <| result
             |Error _ -> unhandled
-        bind InternalHandlers.askContext binder
+        bind binder InternalHandlers.askContext 
 
     let deriveContentLength handler = HttpHandler (fun ctx ->
         let oldBody = ctx.Response.Body
@@ -137,24 +137,17 @@ module HttpHandler =
             newBody.CopyToAsync oldBody
             |> Async.AwaitTask
             |> Async.bind (fun _ -> Async.return' res)))
-
-    let authenticated handler =
-        HttpHandler (fun ctx -> 
-            if not <| isNull ctx.User && ctx.User.Identity.IsAuthenticated then
-                InternalHandlers.runHandler handler ctx
-            else
-                Async.return' ShortCircuit)
-
+           
     let internal runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         InternalHandlers.runHandler handler ctx
         |> Async.map (ignore)
         |> Async.bind (fun _ -> Async.AwaitTask (ctx.Response.Body.FlushAsync()))
-        |> Async.startAsPlainTask // ctx.RequestAborted
+        |> Async.startAsPlainTaskWithCancellation ctx.RequestAborted
 
 type HttpHandlerBuilder() =
     member this.Return x = HttpHandler.return' x
     member this.ReturnFrom x : HttpHandler<'U> = x
-    member this.Bind (x, f) = HttpHandler.bind x f
+    member this.Bind (x, f) = HttpHandler.bind f x
     member this.TryFinally(body, compensation) =
         HttpHandler (fun ctx ->
             async.TryFinally(InternalHandlers.runHandler body ctx, compensation))
@@ -167,7 +160,7 @@ module Prelude =
     let handler = HttpHandlerBuilder()
     let inline (<!>) f x = HttpHandler.map f x
     let inline (<*>) f x = HttpHandler.apply f x
-    let inline (>>=) x f = HttpHandler.bind x f
+    let inline (>>=) x f = HttpHandler.bind f x
     let inline (>=>) f g x = f x >>= g
     let inline ( *> ) u v = (fun _ x -> x) <!> u <*> v
     let inline ( <* ) u v = (fun x _ -> x) <!> u <*> v

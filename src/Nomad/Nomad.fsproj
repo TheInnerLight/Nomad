@@ -2552,6 +2552,8 @@
     <Compile Include="Async.fs" />
     <Compile Include="Http.fs" />
     <Compile Include="Headers.fs" />
+    <Compile Include="Responses.fs" />
+    <Compile Include="Auth.fs" />
     <Compile Include="File.fs" />
     <Compile Include="Nomad.fs" />
     <None Include="paket.references" />
