@@ -52,7 +52,7 @@ module Http =
 [<Struct>]
 type HandleState<'T> =
     |Continue of 'T
-    |ShortCircuit
+    |Unhandled
 
 [<Struct>]
 type HttpHandler<'U> = internal HttpHandler of (HttpContext -> Async<HandleState<'U>>)
@@ -71,22 +71,49 @@ module internal InternalHandlers =
         match hand with
         |HttpHandler g -> g
 
+    /// Uses a supplied http handler only if the request verb matches the supplied verb
+    let inline filterVerb verb route = 
+        HttpHandler (fun ctx -> 
+            if Http.requestMethod ctx.Request.Method = verb then
+                runHandler route ctx
+            else
+                Async.return' Unhandled)
+
 module HttpHandler =
 
     let getReqHeaders = InternalHandlers.withContext (fun ctx -> HttpHeaders <| ctx.Request.GetTypedHeaders())
 
+    /// Create an http handler that sets the response content type to a supplied content type
     let setContentType contentType = InternalHandlers.withContext (fun ctx -> ctx.Response.ContentType <- ContentType.asString contentType)
 
+    /// Create an http handler that sets the response status to a supplied status
     let setStatus status = InternalHandlers.withContext (fun ctx -> ctx.Response.StatusCode <- Http.responseCode status)
 
+    /// Create an http handler that reads all of the bytes from the request body
+    let readToEnd() = InternalHandlers.withContextAsync (fun ctx -> 
+        async {
+            match Option.ofNullable ctx.Request.ContentLength with
+            |Some length ->
+                return! ctx.Request.Body.AsyncRead (int length)
+            |None ->
+                use stream = new MemoryStream()
+                do! Async.awaitPlainTask <| ctx.Request.Body.CopyToAsync(stream)
+                return stream.ToArray()
+        })
+
+    /// Create an http handler that writes some supplied bytes to the response body
     let writeBytes bytes = InternalHandlers.withContextAsync (fun ctx -> ctx.Response.Body.AsyncWrite bytes)
 
+    /// Create an http handler that writes some supplied UTF-8 text to the response body
     let writeText (text : string) = InternalHandlers.withContextAsync (fun ctx -> ctx.Response.Body.AsyncWrite <| System.Text.Encoding.UTF8.GetBytes(text))
 
-    let unhandled = HttpHandler (fun _ -> Async.return' ShortCircuit)
+    /// Create an http handler that does not handle the request
+    let unhandled = HttpHandler (fun _ -> Async.return' Unhandled)
 
+    /// Create an http handler  that returns the supplied result
     let return' x =  HttpHandler (fun _  -> Async.return' <| Continue x)
 
+    /// Lift an asychronous operation as an http handler 
     let liftAsync x = HttpHandler (fun _ -> Async.map Continue x)
 
     let bind f x = HttpHandler (fun ctx ->
@@ -94,30 +121,40 @@ module HttpHandler =
         |> Async.bind (fun x' ->
             match x' with
             |Continue(value) -> InternalHandlers.runHandler (f value) ctx
-            |ShortCircuit -> Async.return' ShortCircuit))
+            |Unhandled -> Async.return' Unhandled))
+
 
     let map f x = HttpHandler (fun ctx ->
         InternalHandlers.runHandler x ctx
         |> Async.bind (fun x' ->
             match x' with
             |Continue(value) -> Async.return' <| Continue (f value) 
-            |ShortCircuit -> Async.return' ShortCircuit))
+            |Unhandled -> Async.return' Unhandled))
 
+    /// Sequential application of http handlers
     let apply f x = bind (fun fe -> map fe x) f
 
+    /// Uses a supplied http handler only if the request is a GET request
+    let inline get route = InternalHandlers.filterVerb Get route
+
+   /// Uses a supplied http handler only if the request is a POST request
+    let inline post route = InternalHandlers.filterVerb Post route
+
+    /// An http request handler that tries each of the supplied list of handlers in turn until one of them succeeds
     let choose routes =
         let rec firstM routes ctx =
             async{
                 match routes with
-                |[] -> return ShortCircuit
+                |[] -> return Unhandled
                 |route::routes' ->
                     let! route = InternalHandlers.runHandler route ctx
                     match route with
                     |Continue value -> return Continue(value)
-                    |ShortCircuit -> return! firstM routes' ctx
+                    |Unhandled -> return! firstM routes' ctx
             }
         HttpHandler (fun ctx -> firstM routes ctx)
 
+    /// An http request handler that handles routes of the supplied PrintFormat pattern
     let routeScan pattern =
         let binder (ctx : HttpContext) =
             match Sscanf.sscanf pattern (ctx.Request.Path.Value) with
@@ -125,6 +162,7 @@ module HttpHandler =
             |Error _ -> unhandled
         bind binder InternalHandlers.askContext 
 
+    /// A handler that caches the values from the supplied handler in order to derive the content length of the response
     let deriveContentLength handler = HttpHandler (fun ctx ->
         let oldBody = ctx.Response.Body
         let newBody = new System.IO.MemoryStream()
@@ -144,6 +182,7 @@ module HttpHandler =
         |> Async.bind (fun _ -> Async.AwaitTask (ctx.Response.Body.FlushAsync()))
         |> Async.startAsPlainTaskWithCancellation ctx.RequestAborted
 
+/// Computation builder for HttpHandlers
 type HttpHandlerBuilder() =
     member this.Return x = HttpHandler.return' x
     member this.ReturnFrom x : HttpHandler<'U> = x

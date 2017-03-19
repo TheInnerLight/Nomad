@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="1.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.0" />

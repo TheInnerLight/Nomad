@@ -2,12 +2,26 @@
 
 open Nomad
 open HttpHandler
+open System.Security.Claims
 
 module HttpHandler =
-    let authenticated handler =
+    /// Creates an http handler that challenges the user to authenticate before allowing them access to the supplied http handler
+    let challenge handler =
         InternalHandlers.askContext
         |> bind (fun ctx -> 
             if not <| isNull ctx.User && ctx.User.Identity.IsAuthenticated then
                 handler
             else
-                Responses.Forbidden)
+                liftAsync << Async.awaitPlainTask <| ctx.Authentication.ChallengeAsync())
+
+    /// Creates an http handler that, given a method for validating some credentials and the credentials themselves, validates the supplied credentials and, if they are successfully validated, signs the user in.
+    let signIn claimsPrincipalCreator credentials =
+        InternalHandlers.askContext
+        |> bind (fun ctx ->
+            match claimsPrincipalCreator credentials with
+            |Ok principal -> 
+                ctx.Authentication.SignInAsync("MyCookieMiddlewareInstance", principal)
+                |> Async.awaitPlainTask
+                |> liftAsync
+            |Error err ->
+                liftAsync << Async.awaitPlainTask <| ctx.Authentication.ChallengeAsync())

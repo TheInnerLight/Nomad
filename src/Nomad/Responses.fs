@@ -2,6 +2,7 @@
 
 open HttpHandler
 
+/// A set of generic template responses
 module Responses =
     let private errorPage code title descr = 
         sprintf """

@@ -21,17 +21,27 @@ module private HeaderParsers =
 
 open HeaderParsers
 
+/// A range header
 type RangeHeader =
     |StartOnlyRange of string * int64
     |StartEndRanges of string * (int64*int64) list
 
-type Cookie =
-    {
-        Name : string
-        Value : string
+/// A content range header
+type ContentRangeHeader = 
+    |UnitRangeAndSize of unit : string * startRange : int64 * endRange : int64 * size : int64
+    |UnitAndRange of unit : string * startRange : int64 * endRange : int64
+    |UnitAndSize of unit : string * size : int64
+
+/// A cookie header
+type Cookie = {
+    /// The name of the cookie
+    Name : string
+    /// The cookie value
+    Value : string
     }
 
 module private InlineHeaderParsers =
+    /// Try to parse a string as some type ^T that exposes a TryParse static method
     let inline tryParseHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> inputs =
         let res = ref Unchecked.defaultof<'T>
         if ((^T) : (static member TryParse : string * byref< ^ T > -> bool) (inputs, &res.contents)) then
@@ -39,13 +49,15 @@ module private InlineHeaderParsers =
         else 
             Result.Error <| ParseException "Failed to parse header"
 
+    /// Try to parse a string as a list of some type ^T that exposes a TryParseList static method
     let inline tryParseHeaderList< ^T when ^T : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T >> -> bool)> inputs =
         let res = ref Unchecked.defaultof<System.Collections.Generic.IList<'T>>
         if ((^T) : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T >> -> bool) (inputs, &res.contents)) then
             Result.Ok !res
         else 
             Result.Error <| ParseException "Failed to parse header"
-
+    
+    /// Try to parse an HTTP Header with the supplied name as some type ^T that exposes a TryParse static method
     let inline tryGetHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> name = function
         |HttpHeaders headers ->
             match headers.Headers.TryGetValue(name) with
@@ -53,7 +65,8 @@ module private InlineHeaderParsers =
                 let headerStr : string = !>> headerStrVals
                 tryParseHeader< ^T > headerStr
             |_ -> Result.Error << HeaderNotFoundException <| sprintf  "%s header was not found" name
-                                                
+         
+    /// Try to parse an HTTP Header with the supplied name as a list of some type ^T that exposes a TryParseList static method
     let inline tryGetHeaderList< ^T when ^T : (static member TryParseList : System.Collections.Generic.IList<string> * byref<System.Collections.Generic.IList< ^ T>> -> bool)> name = function
         |HttpHeaders headers ->
             match headers.Headers.TryGetValue(name) with
@@ -106,6 +119,12 @@ module HttpHeaders =
 
     let tryGetContentRange header = 
         tryGetHeader<ContentRangeHeaderValue> HeaderNames.ContentRange header
+        |> Result.bind (fun crhv ->
+            match (crhv.Unit, Option.ofNullable crhv.From, Option.ofNullable crhv.To, Option.ofNullable crhv.Length) with
+            |(u, Some(from), Some(to'), Some(length))  -> Result.Ok <| UnitRangeAndSize (u, from, to', length)
+            |(u, Some(from), Some(to'), None)          -> Result.Ok <| UnitAndRange (u, from, to')
+            |(u, None, None, Some(length))             -> Result.Ok <| UnitAndSize (u, length)
+            |_                                         -> Result.Error <| ParseException "Failed to parse Content Range header")
 
     let tryGetCookie header =
         tryGetHeaderList<CookieHeaderValue> HeaderNames.Cookie header
