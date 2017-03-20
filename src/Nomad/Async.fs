@@ -9,6 +9,8 @@ module Async =
 
     let map f x = async.Bind(x, async.Return << f)
 
+    let apply f x = async.Bind(f, fun fe -> map fe x)
+
     let inline startAsPlainTask (work : Async<unit>) : System.Threading.Tasks.Task = 
         Async
             .StartAsTask(work)

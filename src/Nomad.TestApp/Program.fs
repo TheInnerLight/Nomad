@@ -15,14 +15,13 @@ module Controllers =
             post <| 
                 handler {
                     let! result = readToEnd()
-                    return! signIn (fun _ -> Result.Ok <| ClaimsPrincipal()) result
+                    return! signIn "MyCookieMiddlewareInstance" (fun _ -> Result.Ok <| ClaimsPrincipal()) result
                 }
         ]
 
-
 module TestServer =
     let testHandler1 x = 
-        challenge <|
+        challenge "MyCookieMiddlewareInstance" <|
             setStatus Http.Ok 
             *> writeText (sprintf "Hello World! %i" x)
 
@@ -35,8 +34,6 @@ module TestServer =
             setStatus Http.Ok 
             *> setContentType ContentType.``text/html`` 
             *> writeText  (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
-        
-            
 
     let testHandler4() =
         setStatus Http.Ok
@@ -46,8 +43,6 @@ module TestServer =
             match HttpHeaders.tryParseRangeHeader x with
             |Ok range -> writeFile """movie.mp4"""
             |Error err -> return' ())
-
-
 
     let testRoutes =
         choose [
@@ -64,7 +59,7 @@ module TestServer =
 
         let cookieAuthOpts = CookieAuthenticationOptions()
         cookieAuthOpts.AuthenticationScheme <- "MyCookieMiddlewareInstance"
-        cookieAuthOpts.LoginPath <- new PathString("/login")
+        cookieAuthOpts.LoginPath <- PathString("/login")
         cookieAuthOpts.AutomaticAuthenticate <- true
         cookieAuthOpts.AutomaticChallenge <- true
 
