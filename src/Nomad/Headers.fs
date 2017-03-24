@@ -95,13 +95,6 @@ module HttpHeaders =
                 |_                                                       -> Result.Error <| ParseException "Failed to parse range header"
             |false, _ -> Result.Error <| HeaderNotFoundException "Range header was not found"
 
-    let tryGetAccept headers = 
-        tryGetHeaderList<MediaTypeHeaderValue> (HeaderNames.Accept) headers
-        |> Result.map (fun mediaType ->
-                mediaType
-                |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
-                |> Seq.sortByDescending snd
-                |> List.ofSeq)
 
     let tryGetStringWithQuality name headers =
         tryGetHeaderList<StringWithQualityHeaderValue> name headers
@@ -111,12 +104,25 @@ module HttpHeaders =
             |> Seq.sortByDescending snd
             |> List.ofSeq)
 
+    /// Try to get the 'Accept' header value - the content types acceptable for the response
+    let tryGetAccept headers = 
+        tryGetHeaderList<MediaTypeHeaderValue> (HeaderNames.Accept) headers
+        |> Result.map (fun mediaType ->
+                mediaType
+                |> Seq.map (fun x -> {TopLevel = TopLevelMime.fromString x.Type; SubType = x.SubType}, Option.ofNullable x.Quality)
+                |> Seq.sortByDescending snd
+                |> List.ofSeq)
+
+    /// Try to get the 'Accept-Charset' header value: the character sets that are acceptable for the response
     let tryGetAcceptCharset = tryGetStringWithQuality HeaderNames.AcceptCharset
 
+    /// Try to get the 'Accept-Encoding' header value: the encodings that are acceptable for the response
     let tryGetAcceptEncoding = tryGetStringWithQuality HeaderNames.AcceptEncoding
 
+    /// Try to get the 'Accept-Language' header value: the languages that are acceptable for the response
     let tryGetAcceptLanguage = tryGetStringWithQuality HeaderNames.AcceptLanguage
 
+    /// Try to get the content range header values
     let tryGetContentRange header = 
         tryGetHeader<ContentRangeHeaderValue> HeaderNames.ContentRange header
         |> Result.bind (fun crhv ->
@@ -126,6 +132,16 @@ module HttpHeaders =
             |(u, None, None, Some(length))             -> Result.Ok <| UnitAndSize (u, length)
             |_                                         -> Result.Error <| ParseException "Failed to parse Content Range header")
 
-    let tryGetCookie header =
+    /// Try to get the cookie header values
+    let tryGetCookies header =
         tryGetHeaderList<CookieHeaderValue> HeaderNames.Cookie header
         |> Result.map (List.ofSeq << Seq.map (fun cookie -> {Name = cookie.Name; Value = cookie.Value}))
+
+    let tryGetDate = tryGetHeader<System.DateTime> HeaderNames.Date
+
+    /// Try to get the 'If-Modified-Since' header value
+    let tryGetIfModifiedSince = tryGetHeader<System.DateTime> HeaderNames.IfModifiedSince
+
+    /// Try to get the 'If-Unmodified-Since' header value
+    let tryGetIfUnmodifiedSince = tryGetHeader<System.DateTime> HeaderNames.IfUnmodifiedSince
+        

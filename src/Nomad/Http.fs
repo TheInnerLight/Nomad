@@ -135,10 +135,10 @@ module HttpHandler =
     let apply f x = bind (fun fe -> map fe x) f
 
     /// Uses a supplied http handler only if the request is a GET request
-    let inline get route = InternalHandlers.filterVerb Get route
+    let get route = InternalHandlers.filterVerb Get route
 
    /// Uses a supplied http handler only if the request is a POST request
-    let inline post route = InternalHandlers.filterVerb Post route
+    let post route = InternalHandlers.filterVerb Post route
 
     /// An http request handler that tries each of the supplied list of handlers in turn until one of them succeeds
     let choose routes =
