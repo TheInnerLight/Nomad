@@ -6,7 +6,7 @@ open System.Security.Claims
 
 module HttpHandler =
     /// Creates an http handler that challenges the user to authenticate before allowing them access to the supplied http handler
-    let challenge (authenticationScheme : string) handler =
+    let requireAuth (authenticationScheme : string) handler =
         InternalHandlers.askContext
         |> bind (fun ctx -> 
             if not <| isNull ctx.User && ctx.User.Identity.IsAuthenticated then

@@ -21,7 +21,7 @@ module Controllers =
 
 module TestServer =
     let testHandler1 x = 
-        challenge "MyCookieMiddlewareInstance" <|
+        requireAuth "MyCookieMiddlewareInstance" <|
             setStatus Http.Ok 
             *> writeText (sprintf "Hello World! %i" x)
 

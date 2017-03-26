@@ -40,6 +40,10 @@ type Cookie = {
     Value : string
     }
 
+type ETag =
+    |Weak of string
+    |Strong of string
+
 module private InlineHeaderParsers =
     /// Try to parse a string as some type ^T that exposes a TryParse static method
     let inline tryParseHeader< ^T when ^T : (static member TryParse : string * byref< ^ T > -> bool)> inputs =
@@ -73,6 +77,15 @@ module private InlineHeaderParsers =
             |true, headerStrVals ->
                 tryParseHeaderList< ^T > headerStrVals
             |_ -> Result.Error << HeaderNotFoundException <| sprintf  "%s header was not found" name
+
+    /// Try to get an ETag header list for the supplied header name
+    let tryGetETagHeaderList headerName headers = 
+        tryGetHeaderList<EntityTagHeaderValue> headerName headers
+        |> Result.map (List.ofSeq << Seq.map (fun tag ->
+            if tag.IsWeak then
+                Weak tag.Tag
+            else
+                Strong tag.Tag))
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module HttpHeaders =
@@ -122,6 +135,9 @@ module HttpHeaders =
     /// Try to get the 'Accept-Language' header value: the languages that are acceptable for the response
     let tryGetAcceptLanguage = tryGetStringWithQuality HeaderNames.AcceptLanguage
 
+    /// Try to get the content length header
+    let tryGetContentLength = tryGetHeader<int64> HeaderNames.ContentLength
+
     /// Try to get the content range header values
     let tryGetContentRange header = 
         tryGetHeader<ContentRangeHeaderValue> HeaderNames.ContentRange header
@@ -137,11 +153,19 @@ module HttpHeaders =
         tryGetHeaderList<CookieHeaderValue> HeaderNames.Cookie header
         |> Result.map (List.ofSeq << Seq.map (fun cookie -> {Name = cookie.Name; Value = cookie.Value}))
 
+    /// Try to get the date header values
     let tryGetDate = tryGetHeader<System.DateTime> HeaderNames.Date
+
+    /// Try to get the If-Match header values
+    let tryGetIfMatch headers = tryGetETagHeaderList HeaderNames.IfMatch headers
 
     /// Try to get the 'If-Modified-Since' header value
     let tryGetIfModifiedSince = tryGetHeader<System.DateTime> HeaderNames.IfModifiedSince
 
+    /// Try to get the If-None-Match header values
+    let tryGetIfNoneMatch headers = tryGetETagHeaderList HeaderNames.IfNoneMatch headers
+
     /// Try to get the 'If-Unmodified-Since' header value
     let tryGetIfUnmodifiedSince = tryGetHeader<System.DateTime> HeaderNames.IfUnmodifiedSince
         
+    
