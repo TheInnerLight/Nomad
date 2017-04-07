@@ -39,10 +39,7 @@ module TestServer =
         setStatus Http.Ok
         *> setContentType ContentType.``video/mp4``
         *> getReqHeaders
-        >>= (fun x -> 
-            match HttpHeaders.tryParseRangeHeader x with
-            |Ok range -> writeFile """movie.mp4"""
-            |Error err -> return' ())
+        *> writeFileRespectingRangeHeaders """movie.mp4"""
 
     let testRoutes =
         choose [
@@ -57,11 +54,13 @@ module TestServer =
     [<EntryPoint>]
     let main argv = 
 
-        let cookieAuthOpts = CookieAuthenticationOptions()
-        cookieAuthOpts.AuthenticationScheme <- "MyCookieMiddlewareInstance"
-        cookieAuthOpts.LoginPath <- PathString("/login")
-        cookieAuthOpts.AutomaticAuthenticate <- true
-        cookieAuthOpts.AutomaticChallenge <- true
+        let cookieAuthOpts = 
+            CookieAuthenticationOptions (
+                AuthenticationScheme = "MyCookieMiddlewareInstance",
+                LoginPath = PathString "/login",
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true
+                )
 
         Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]}
         0 // return an integer exit code

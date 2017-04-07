@@ -42,3 +42,32 @@ module HttpHandler =
     let writeFile file = writePartialFile Complete file
 
     let writeFileRange start' end' file = writePartialFile (Part (start', end')) file
+
+    let writeFileRespectingRangeHeaders file = 
+        HttpHandler.getReqHeaders
+        >>= (fun x -> 
+            match HttpHeaders.tryParseRangeHeader x with
+            |Ok range -> 
+                match range with
+                |StartOnlyRange ("bytes", start) -> writeFileRange start (start + DEFAULT_BUFFER_SIZE) file
+                |StartEndRanges ("bytes", startEnds) -> 
+                    startEnds
+                    |> List.map (fun (s, e) -> writeFileRange s e file)
+                    |> HttpHandler.sequenceIgnore
+                |_ -> Responses.``Range Not Satisfiable``
+            |Error err -> writeFile file)
+
+module Supplemental =
+    let withByteRangeHeader defaultSize noRangeHandler rangeQualifiedHandler =
+        HttpHandler.getReqHeaders
+        >>= (fun x -> 
+            match HttpHeaders.tryParseRangeHeader x with
+            |Ok range -> 
+                match range with
+                |StartOnlyRange ("bytes", start) -> rangeQualifiedHandler start (start + defaultSize)
+                |StartEndRanges ("bytes", startEnds) -> 
+                    startEnds
+                    |> List.map (fun (s, e) -> rangeQualifiedHandler s e)
+                    |> HttpHandler.sequenceIgnore
+                |_ -> Responses.``Range Not Satisfiable``
+            |Error err -> noRangeHandler)

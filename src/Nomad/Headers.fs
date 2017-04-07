@@ -40,8 +40,11 @@ type Cookie = {
     Value : string
     }
 
+/// An entity tag header
 type ETag =
+    /// An entity tag with weak validation
     |Weak of string
+    /// An entity tag with strong validation
     |Strong of string
 
 module private InlineHeaderParsers =
@@ -167,5 +170,7 @@ module HttpHeaders =
 
     /// Try to get the 'If-Unmodified-Since' header value
     let tryGetIfUnmodifiedSince = tryGetHeader<System.DateTime> HeaderNames.IfUnmodifiedSince
+
+
         
     

@@ -38,7 +38,7 @@ module Nomad =
 
     let run nc =
         WebHostBuilder()
-            .UseKestrel()
+            .UseKestrel(fun opts -> opts.ThreadCount <- 12)
             .UseContentRoot(Directory.GetCurrentDirectory())
             .ConfigureServices(fun serv -> ignore <| serv.AddAuthentication())
             .Configure(fun app -> 

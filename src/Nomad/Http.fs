@@ -49,6 +49,8 @@ module Http =
 
     let UnprocessableEntity = ClientError4xx 22
 
+    let RangeNotSatisfiable = ClientError4xx 16
+
 [<Struct>]
 type HandleState<'T> =
     |Continue of 'T
@@ -116,6 +118,7 @@ module HttpHandler =
     /// Lift an asychronous operation as an http handler 
     let liftAsync x = HttpHandler (fun _ -> Async.map Continue x)
 
+    /// Monadic bind for http handlers
     let bind f x = HttpHandler (fun ctx ->
         InternalHandlers.runHandler x ctx
         |> Async.bind (fun x' ->
@@ -123,7 +126,7 @@ module HttpHandler =
             |Continue(value) -> InternalHandlers.runHandler (f value) ctx
             |Unhandled -> Async.return' Unhandled))
 
-
+    /// Functor map for http handlers
     let map f x = HttpHandler (fun ctx ->
         InternalHandlers.runHandler x ctx
         |> Async.bind (fun x' ->
@@ -153,6 +156,22 @@ module HttpHandler =
                     |Unhandled -> return! firstM routes' ctx
             }
         HttpHandler (fun ctx -> firstM routes ctx)
+
+    /// Runs a list of Http Handlers in sequence until all finish successfully or one fails, returning the results in a list
+    let sequence routes =
+        let rec seqRec routes running ctx =
+            async{
+                match routes with
+                |[] -> return Continue (running)
+                |route::routes' ->
+                    let! route = InternalHandlers.runHandler route ctx
+                    match route with
+                    |Continue value -> return! seqRec routes' (value :: running) ctx
+                    |Unhandled -> return Unhandled
+            }
+        HttpHandler (fun ctx -> seqRec routes [] ctx)
+
+    let sequenceIgnore routes = map (ignore) (sequence routes)
 
     /// An http request handler that handles routes of the supplied PrintFormat pattern
     let routeScan pattern =
@@ -197,9 +216,15 @@ type HttpHandlerBuilder() =
 [<AutoOpen>]
 module Prelude =
     let handler = HttpHandlerBuilder()
+    /// Map operator for Http Handlers
     let inline (<!>) f x = HttpHandler.map f x
+    /// Apply operator for Http Handlers
     let inline (<*>) f x = HttpHandler.apply f x
+    /// Bind operator for Http Handlers
     let inline (>>=) x f = HttpHandler.bind f x
+    /// Kleisli composition (composition of binding functions) operator for Http Handlers
     let inline (>=>) f g x = f x >>= g
+    /// Sequence actions, discarding the value of the first argument.
     let inline ( *> ) u v = (fun _ x -> x) <!> u <*> v
+    /// Sequence actions, discarding the value of the second argument.
     let inline ( <* ) u v = (fun x _ -> x) <!> u <*> v

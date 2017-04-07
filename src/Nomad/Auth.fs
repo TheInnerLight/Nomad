@@ -24,4 +24,6 @@ module HttpHandler =
                 |> Async.awaitPlainTask
                 |> liftAsync
             |Error err ->
-                liftAsync << Async.awaitPlainTask <| ctx.Authentication.ChallengeAsync(authenticationScheme))
+                ctx.Authentication.ChallengeAsync(authenticationScheme)
+                |> Async.awaitPlainTask
+                |> liftAsync)

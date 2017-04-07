@@ -34,5 +34,7 @@ module Responses =
     let ``Not Found`` = showErrorPage Http.NotFound "Not Found" "The resource that you requested was not found."
 
     let ``Forbidden`` = showErrorPage Http.Forbidden "Forbidden" "You do not have permission to access this resource."
+
+    let ``Range Not Satisfiable`` = showErrorPage Http.RangeNotSatisfiable "Range Not Satisfiable" "The requested byte range was not valid."
         
 

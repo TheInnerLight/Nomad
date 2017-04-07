@@ -6,17 +6,28 @@ open System.Text.RegularExpressions
 open Microsoft.FSharp.Reflection
 
 exception ParseException of string
+exception TraverseException of obj
 
 module Result =
+    let traverse (mFunc : 'a -> Result<'b, 'c>) lst =
+        try
+            List.foldBack (fun v acc -> 
+                match mFunc v with
+                |Ok v -> v :: acc
+                |Error e -> raise <| TraverseException(e)) lst []
+            |> Ok
+        with
+            |TraverseException obj -> Error (obj :?> 'c)
 
-    let lift2 f x y =
-        x |> Result.map (fun x' -> y |> Result.map (fun y' -> f x' y')) |> Result.bind id
-
-    let traverse mFunc lst =
-        let consF x ys = lift2 (fun x y -> x :: y) (mFunc x) ys
-        List.foldBack (consF) lst (Ok [])
-
-    let sequence seq = traverse id seq
+    let sequence (lst : Result<'a, 'b> list) =
+        try
+            List.foldBack (fun v acc -> 
+                match v with
+                |Ok v -> v :: acc
+                |Error e -> raise <| TraverseException(e)) lst []
+            |> Ok
+        with
+            |TraverseException obj -> Error (obj :?> 'b)
 
 module Parsers = 
     let check f x = 
