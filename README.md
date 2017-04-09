@@ -11,11 +11,11 @@ open HttpHandler
 
 [<EntryPoint>]
 let main argv = 
-    let helloConfig = 
+    let helloWorld = 
         setStatus Http.Ok 
         *> writeText "Hello World!"
 
-    Nomad.run {Nomad.defaultConfig with RouteConfig = helloConfig}
+    Nomad.run {Nomad.defaultConfig with RouteConfig = helloWorld}
 ```
 
 This application responds to any incoming http request by setting a "200 OK" response and writing "Hello World" to the response body.
