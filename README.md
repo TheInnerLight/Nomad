@@ -20,9 +20,11 @@ let main argv =
 
 This application responds to any incoming http request by setting a "200 OK" response and writing "Hello World" to the response body.
 
-## The model
+## Programming Model
 
-HttpHandlers can perform atomic operations in the Http Context such as setting the response body, setting the response code, reading from the request body, etc.
+The Nomad programming model is built on top of `HttpHandler`s, values of which are responsible for handling HTTP requests.
+
+Many primitive HttpHandlers are provided which can perform atomic operations in the Http Context such as setting the response body, setting the response code, reading from the request body, etc.
 
 Writing examples:
 
