@@ -1,11 +1,13 @@
 ﻿// Learn more about F# at http://fsharp.org
-namespace Nomad
+namespace Nomad.TestApp
 
-open Nomad.Files
 open Nomad.Authentication
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open System.Security.Claims
+open Nomad
+open Nomad.Authentication
+open Nomad.Files
 open HttpHandler
 
 module Controllers =
@@ -14,7 +16,7 @@ module Controllers =
             get  <| writeText "Please log in"
             post <| 
                 handler {
-                    let! result = readToEnd()
+                    let! result = readToEnd
                     return! signIn "MyCookieMiddlewareInstance" (fun _ -> Result.Ok <| ClaimsPrincipal()) result
                 }
         ]

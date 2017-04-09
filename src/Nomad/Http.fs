@@ -83,6 +83,7 @@ module internal InternalHandlers =
 
 module HttpHandler =
 
+    /// Create an http handler that gets the request headers
     let getReqHeaders = InternalHandlers.withContext (fun ctx -> HttpHeaders <| ctx.Request.GetTypedHeaders())
 
     /// Create an http handler that sets the response content type to a supplied content type
@@ -92,7 +93,7 @@ module HttpHandler =
     let setStatus status = InternalHandlers.withContext (fun ctx -> ctx.Response.StatusCode <- Http.responseCode status)
 
     /// Create an http handler that reads all of the bytes from the request body
-    let readToEnd() = InternalHandlers.withContextAsync (fun ctx -> 
+    let readToEnd = InternalHandlers.withContextAsync (fun ctx -> 
         async {
             match Option.ofNullable ctx.Request.ContentLength with
             |Some length ->

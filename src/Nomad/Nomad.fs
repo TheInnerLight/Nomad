@@ -22,6 +22,8 @@ type NomadConfig = {RouteConfig : HttpHandler<unit>; AuthTypes : AuthenticationT
 
 module Nomad =
 
+    let defaultConfig = {RouteConfig = return' (); AuthTypes = []}
+
     let runRoutes rc (app : IApplicationBuilder) =
         app.Run(fun ctx -> 
             ctx.Response.Headers.["Server"] <- (StringValues "Nomad")
