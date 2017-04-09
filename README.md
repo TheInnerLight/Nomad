@@ -6,6 +6,8 @@ Nomad is an F# wrapper for ASP.NET Core designed to make backend development sim
 Let's start by showing a simple "Hello World!" application written using Nomad.
 
 ```fsharp
+open HttpHandler
+
 [<EntryPoint>]
 let main argv = 
     let helloConfig = 
