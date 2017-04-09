@@ -7,7 +7,7 @@ Let's start by showing a simple "Hello World!" application written using Nomad.
 
 ```fsharp
 open Nomad
-open Nomad.HttpHandler
+open HttpHandler
 
 [<EntryPoint>]
 let main argv = 
