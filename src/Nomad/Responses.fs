@@ -35,6 +35,8 @@ module Responses =
 
     let ``Forbidden`` = showErrorPage Http.Forbidden "Forbidden" "You do not have permission to access this resource."
 
+    let ``Unauthorised`` = showErrorPage Http.Unauthorised "Unauthorised" "Authentication is required to access this resource."
+
     let ``Range Not Satisfiable`` = showErrorPage Http.RangeNotSatisfiable "Range Not Satisfiable" "The requested byte range was not valid."
         
 

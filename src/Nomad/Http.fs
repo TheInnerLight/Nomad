@@ -43,6 +43,8 @@ module Http =
 
     let BadRequest = ClientError4xx 00
 
+    let Unauthorised = ClientError4xx 01
+
     let Forbidden = ClientError4xx 03
 
     let NotFound = ClientError4xx 04
@@ -158,7 +160,7 @@ module HttpHandler =
             }
         HttpHandler (fun ctx -> firstM routes ctx)
 
-    /// Runs a list of Http Handlers in sequence until all finish successfully or one fails, returning the results in a list
+    /// Runs a list of Http Handlers in sequence aggregating all of the results that succeed into a list
     let sequence routes =
         let rec seqRec routes running ctx =
             async{
@@ -168,7 +170,7 @@ module HttpHandler =
                     let! route = InternalHandlers.runHandler route ctx
                     match route with
                     |Continue value -> return! seqRec routes' (value :: running) ctx
-                    |Unhandled -> return Unhandled
+                    |Unhandled -> return! seqRec routes' (running) ctx
             }
         HttpHandler (fun ctx -> seqRec routes [] ctx)
 
@@ -199,7 +201,6 @@ module HttpHandler =
     let internal runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         InternalHandlers.runHandler handler ctx
         |> Async.map (ignore)
-        |> Async.bind (fun _ -> Async.AwaitTask (ctx.Response.Body.FlushAsync()))
         |> Async.startAsPlainTaskWithCancellation ctx.RequestAborted
 
 /// Computation builder for HttpHandlers
