@@ -53,6 +53,8 @@ module Http =
 
     let RangeNotSatisfiable = ClientError4xx 16
 
+    let MethodNotAllowed = ClientError4xx 05
+
 [<Struct>]
 type HandleState<'T> =
     |Continue of 'T
