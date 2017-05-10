@@ -1,4 +1,4 @@
-module Tests
+namespace Nomad.UnitTests
 
 open System
 open FsCheck

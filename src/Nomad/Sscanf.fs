@@ -35,7 +35,7 @@ module Parsers =
         else Error << ParseException <| sprintf "Format failure %s" x 
 
     let tryParseDecimal x = 
-        match Decimal.TryParse x with
+        match Decimal.TryParse(x, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture) with
         |true, value -> Ok value
         |false, _ -> Error <| ParseException "Failed to parse decimal"
 
@@ -45,17 +45,17 @@ module Parsers =
         |false, _ -> Error <| ParseException "Failed to parse boolean"
 
     let tryParseInt x =
-        match Int32.TryParse x with
+        match Int32.TryParse(x, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture)with
         |true, value -> Ok value
         |false, _ -> Error <| ParseException "Failed to parse int"
 
     let tryParseUInt x =
-        match UInt32.TryParse x with
+        match UInt32.TryParse(x, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture) with
         |true, value -> Ok value
         |false, _ -> Error <| ParseException "Failed to parse uint"
 
     let tryParseFloat x =
-        match Double.TryParse x with
+        match Double.TryParse(x, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture) with
         |true, value -> Ok value
         |false, _ -> Error <| ParseException "Failed to parse float"
 
