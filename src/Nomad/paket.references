@@ -10,3 +10,6 @@ Microsoft.Extensions.Configuration
 Microsoft.Extensions.Primitives
 FParsec
 System.ValueTuple
+FSharp.NET.Sdk
+Microsoft.AspNetCore.Authentication.Cookies
+Microsoft.AspNetCore.Authentication.JwtBearer

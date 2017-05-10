@@ -1,0 +1,8 @@
+FSharp.Core
+FSharp.NET.Sdk
+Microsoft.NET.Test.Sdk
+group Test
+  FsCheck
+  FsCheck.Xunit
+  Xunit
+  xunit.runner.visualstudio
