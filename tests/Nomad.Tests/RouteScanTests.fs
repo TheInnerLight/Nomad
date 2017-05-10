@@ -61,3 +61,12 @@ module RouteScanTests =
             HttpHandler.routeScan "/MyResource/%u"
             |> HttpHandler.Unsafe.runHandler context
         result = Continue (u)
+
+    [<Property>]
+    let ``Given a routeScan using a cgar route format, http request route must match for any char`` (c : char) =
+        let context = DefaultHttpContext()
+        context.Request.Path <- PathString(sprintf "/MyResource/%c" c)
+        let result = 
+            HttpHandler.routeScan "/MyResource/%c"
+            |> HttpHandler.Unsafe.runHandler context
+        result = Continue (c)

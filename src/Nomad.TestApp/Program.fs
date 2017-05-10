@@ -49,9 +49,10 @@ module TestServer =
             defaultVerbs with
                 Get = 
                     setStatus Http.Ok
-                    *> setContentType ContentType.``video/mp4``
-                    *> getReqHeaders
-                    *> writeFileRespectingRangeHeaders """movie.mp4"""
+                    *> writeText "Hello Get!"
+                Post = 
+                    setStatus Http.Ok
+                    *> writeText "Hello Post!"
         }
 
     let testRoutes =
