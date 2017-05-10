@@ -87,6 +87,11 @@ module internal InternalHandlers =
 
 module HttpHandler =
 
+    module Unsafe =
+        let runHandler ctx handler  = 
+            InternalHandlers.runHandler handler ctx
+            |> Async.RunSynchronously
+
     /// Create an http handler that gets the request headers
     let getReqHeaders = InternalHandlers.withContext (fun ctx -> HttpHeaders <| ctx.Request.GetTypedHeaders())
 
