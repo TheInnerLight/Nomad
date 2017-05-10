@@ -97,3 +97,22 @@ let testRoutes =
         Responses.``Not Found``
     ]
 ```
+
+### Request Verbs
+
+Handling different http request verbs (e.g. GET, POST, etc) can be done by using the `handleVerbs` function in conjunction with the `defaultVerbs` value.  `defaultVerbs` returns a record that contains handlers for each Http Verb, each of the verbs is initialised with a default handler that returns an Error 405 - Method Not Allowed response.
+
+You can supply implementations for specific verbs using standard F# record `with` syntax.
+
+```fsharp
+    let getHandler() =
+        handleVerbs {
+            defaultVerbs with
+                Get = 
+                    setStatus Http.Ok
+                    *> writeText "Hello Get!"
+                Post = 
+                    setStatus Http.Ok
+                    *> writeText "Hello Post!"
+        }
+```
