@@ -8,6 +8,7 @@ open System.Security.Claims
 open Nomad
 open Nomad.Authentication
 open Nomad.Files
+open Nomad.Verbs
 open HttpHandler
 
 module Controllers =
@@ -42,6 +43,16 @@ module TestServer =
         *> setContentType ContentType.``video/mp4``
         *> getReqHeaders
         *> writeFileRespectingRangeHeaders """movie.mp4"""
+
+    let testHandler5() =
+        handleVerbs {
+            defaultVerbs with
+                Get = 
+                    setStatus Http.Ok
+                    *> setContentType ContentType.``video/mp4``
+                    *> getReqHeaders
+                    *> writeFileRespectingRangeHeaders """movie.mp4"""
+        }
 
     let testRoutes =
         choose [
