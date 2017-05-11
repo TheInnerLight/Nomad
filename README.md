@@ -111,7 +111,7 @@ let testRoutes =
     ]
 ```
 
-CaseInsensitive routes consider the lower case version to be the canonical URL, all other casings will trigger a 301 permanent redirection response, which redirects to the canonical URL.
+Case Insensitive routes consider the lower case version to be the canonical URL, all other casings will trigger a 301 permanent redirection response which redirects to the canonical URL.
 
 
 ## Request Verbs
