@@ -13,14 +13,16 @@ open HttpHandler
 
 module Controllers =
     let loginController() =
-        choose [
-            get  <| writeText "Please log in"
-            post <| 
-                handler {
-                    let! result = readToEnd
-                    return! signIn "MyCookieMiddlewareInstance" (fun _ -> Result.Ok <| ClaimsPrincipal()) result
-                }
-        ]
+        handleVerbs {
+            defaultVerbs with
+                Get = 
+                    writeText "Please log in"
+                Post = 
+                    handler {
+                        let! result = readToEnd
+                        return! signIn "MyCookieMiddlewareInstance" (fun _ -> Result.Ok <| ClaimsPrincipal()) result
+                    }
+        }
 
 module TestServer =
     let testHandler1 x = 
@@ -43,17 +45,6 @@ module TestServer =
         *> setContentType ContentType.``video/mp4``
         *> getReqHeaders
         *> writeFileRespectingRangeHeaders """movie.mp4"""
-
-    let testHandler5() =
-        handleVerbs {
-            defaultVerbs with
-                Get = 
-                    setStatus Http.Ok
-                    *> writeText "Hello Get!"
-                Post = 
-                    setStatus Http.Ok
-                    *> writeText "Hello Post!"
-        }
 
     let testRoutes =
         choose [

@@ -152,12 +152,6 @@ module HttpHandler =
     /// Sequential application of http handlers
     let apply f x = bind (fun fe -> map fe x) f
 
-    /// Uses a supplied http handler only if the request is a GET request
-    let get route = InternalHandlers.filterVerb Get route
-
-   /// Uses a supplied http handler only if the request is a POST request
-    let post route = InternalHandlers.filterVerb Post route
-
     /// An http request handler that tries each of the supplied list of handlers in turn until one of them succeeds
     let choose routes =
         let rec firstM routes ctx =
