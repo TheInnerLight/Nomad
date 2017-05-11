@@ -59,7 +59,7 @@ module TestServer =
         choose [
             routeScan "/%i" >>= testHandler1
             routeScan "/%i/%i" >>= testHandler2
-            routeScan "/test/%i/%i/%s" >>= testHandler3
+            CaseInsensitive.routeScan "/test/%i/%i/%s" >>= testHandler3
             routeScan "/video.mp4" >>= testHandler4
             routeScan "/login" >>= Controllers.loginController
             Responses.``Not Found``

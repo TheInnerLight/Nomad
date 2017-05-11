@@ -55,10 +55,11 @@ module Http =
 
     let MethodNotAllowed = ClientError4xx 05
 
-[<Struct>]
+//[<Struct>]
 type HandleState<'T> =
     |Continue of 'T
     |Unhandled
+    |Terminate
 
 [<Struct>]
 type HttpHandler<'U> = internal HttpHandler of (HttpContext -> Async<HandleState<'U>>)
@@ -134,7 +135,9 @@ module HttpHandler =
         |> Async.bind (fun x' ->
             match x' with
             |Continue(value) -> InternalHandlers.runHandler (f value) ctx
-            |Unhandled -> Async.return' Unhandled))
+            |Unhandled -> Async.return' Unhandled
+            |Terminate -> Async.return' Terminate
+            ))
 
     /// Functor map for http handlers
     let map f x = HttpHandler (fun ctx ->
@@ -142,7 +145,9 @@ module HttpHandler =
         |> Async.bind (fun x' ->
             match x' with
             |Continue(value) -> Async.return' <| Continue (f value) 
-            |Unhandled -> Async.return' Unhandled))
+            |Unhandled -> Async.return' Unhandled
+            |Terminate -> Async.return' Terminate
+            ))
 
     /// Sequential application of http handlers
     let apply f x = bind (fun fe -> map fe x) f
@@ -164,6 +169,7 @@ module HttpHandler =
                     match route with
                     |Continue value -> return Continue(value)
                     |Unhandled -> return! firstM routes' ctx
+                    |Terminate -> return Terminate
             }
         HttpHandler (fun ctx -> firstM routes ctx)
 
@@ -178,18 +184,28 @@ module HttpHandler =
                     match route with
                     |Continue value -> return! seqRec routes' (value :: running) ctx
                     |Unhandled -> return! seqRec routes' (running) ctx
+                    |Terminate -> return Terminate
             }
         HttpHandler (fun ctx -> seqRec routes [] ctx)
 
     let sequenceIgnore routes = map (ignore) (sequence routes)
 
-    /// An http request handler that handles routes of the supplied PrintFormat pattern
+    let route path =
+        let binder (ctx : HttpContext) =
+            if path = ctx.Request.Path.Value then
+                return' ()
+            else
+                unhandled
+        bind binder InternalHandlers.askContext 
+
+    /// An http request handler that handles case *sensitive* routes of the supplied PrintFormat pattern
     let routeScan pattern =
         let binder (ctx : HttpContext) =
             match Sscanf.sscanf pattern (ctx.Request.Path.Value) with
             |Ok result -> return' <| result
             |Error _ -> unhandled
         bind binder InternalHandlers.askContext 
+
 
     /// A handler that caches the values from the supplied handler in order to derive the content length of the response
     let deriveContentLength handler = HttpHandler (fun ctx ->
@@ -204,6 +220,41 @@ module HttpHandler =
             newBody.CopyToAsync oldBody
             |> Async.AwaitTask
             |> Async.bind (fun _ -> Async.return' res)))
+
+    /// A handler that returns a response indicating that the resource has been *temporarily* redirected to the supplied location
+    let redirect location = InternalHandlers.withContext (fun ctx -> ctx.Response.Redirect(location, false))
+
+    /// A handler that returns a response indicating that the resource has been *permanently* redirected to the supplied location
+    let redirectPermanent location = InternalHandlers.withContext (fun ctx -> ctx.Response.Redirect(location, true))
+
+    let private terminate = HttpHandler (fun _ -> Async.return' Terminate)
+
+    /// Case insensitive Http Handlers
+    module CaseInsensitive =
+        /// An http request handler that handles case *insensitive* routes of the supplied PrintFormat pattern
+        let routeScan (pf:PrintfFormat<'a,'b,'c,'d,'e>) =
+            let binder (ctx : HttpContext) =
+                if (ctx.Request.Path.Value = ctx.Request.Path.Value.ToLowerInvariant()) then
+                    routeScan (PrintfFormat<'a,'b,'c,'d,'e>(pf.Value.ToLowerInvariant()))
+                else
+                    ctx.Request.Path <- PathString(ctx.Request.Path.Value.ToLowerInvariant())
+                    routeScan (PrintfFormat<'a,'b,'c,'d,'e>(pf.Value.ToLowerInvariant()))
+                    |> bind (fun _ ->
+                        redirectPermanent (ctx.Request.Path.Value.ToLowerInvariant())
+                        |> bind (fun _ -> terminate))
+            bind binder InternalHandlers.askContext
+
+        let route path =
+            let binder (ctx : HttpContext) =
+                if path = ctx.Request.Path.Value then
+                    return' ()
+                else if path.ToLowerInvariant() = ctx.Request.Path.Value.ToLowerInvariant() then
+                    redirectPermanent (ctx.Request.Path.Value.ToLowerInvariant())
+                    |> bind (fun _ -> terminate)
+                else
+                    unhandled
+            bind binder InternalHandlers.askContext 
+
            
     let internal runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         InternalHandlers.runHandler handler ctx
@@ -230,7 +281,7 @@ module Prelude =
     /// Apply operator for Http Handlers
     let inline (<*>) f x = HttpHandler.apply f x
     /// Bind operator for Http Handlers
-    let inline (>>=) x f = HttpHandler.bind f x
+    let inline (>>=) (x : HttpHandler<'T>) f = HttpHandler.bind f x
     /// Kleisli composition (composition of binding functions) operator for Http Handlers
     let inline (>=>) f g x = f x >>= g
     /// Sequence actions, discarding the value of the first argument.
