@@ -98,7 +98,23 @@ let testRoutes =
     ]
 ```
 
-### Request Verbs
+### Case Sensitivity
+
+Typically, urls are case sensitive, i.e. `/home` and `/HOME` do not match.  If you wish to create case *insensitive* routes, you can use the handlers in the `CaseInsensitive` module.  e.g.
+
+```fsharp
+let testRoutes =
+    choose [
+        CaseInsensitive.routeScan "/home" >>= home
+        routeScan "/%s" >>= greet
+        Responses.``Not Found``
+    ]
+```
+
+CaseInsensitive routes consider the lower case version to be the canonical URL, all other casings will trigger a 301 permanent redirection response, which redirects to the canonical URL.
+
+
+## Request Verbs
 
 Handling different http request verbs (e.g. GET, POST, etc) can be done by using the `handleVerbs` function in conjunction with the `defaultVerbs` value.  `defaultVerbs` returns a record that contains handlers for each Http Verb, each of the verbs is initialised with a default handler that returns an Error 405 - Method Not Allowed response.
 
