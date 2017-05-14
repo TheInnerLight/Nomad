@@ -56,6 +56,10 @@ module TestServer =
             Responses.``Not Found``
         ]
 
+    open Nomad.Routing
+    open Nomad.Routing.Routing
+    open Nomad.Routing.HttpHandler
+
     [<EntryPoint>]
     let main argv = 
 
@@ -67,5 +71,13 @@ module TestServer =
                 AutomaticChallenge = true
                 )
 
-        Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]}
+        //Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]}
+        printfn "%s" "example"
+        
+        ignore <| Routing.run Routing.test (fun i str -> printfn "%i %s" i str) "starship/5/captain/dhfsudhfdshf"
+
+        let test = route (constant "starship" </> intR </> constant "captain" </> strR </> constant "cheese") (fun i cap -> writeText "Hi")
+
+        let test2 = route (constant "path") (testHandler4())
+
         0 // return an integer exit code
