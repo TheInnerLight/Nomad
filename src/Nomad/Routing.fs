@@ -2,6 +2,7 @@ namespace Nomad.Routing
 
 open Nomad
 open FParsec
+open Microsoft.AspNetCore.Http
 
 type private RParser<'a> = Parser<'a, unit>
 
@@ -33,35 +34,44 @@ type private PairRoute<'a,'b,'c>(one : IRoute<'b,'c>, two : IRoute<'a, 'b>) =
 
 type Route<'a,'b> = private Route of IRoute<'a,'b>
 
+[<AutoOpen>]
 module Routing = 
 
-    let constant path = Route(ConstantRoute(path))
+    /// Match a route with a constant supplied path component
+    let constant path : Route<'a,'a> = Route(ConstantRoute(path))
 
     let (</>) ((Route one) : Route<'b,'c>) ((Route two) : Route<'a, 'b>) : Route<'a, 'c> = 
         let (Route slash) = constant "/"
         let one' = PairRoute(one, slash)
         Route(PairRoute(one', two))
 
-    let strR<'a> : Route<'a, _> = Route(ParseRoute(manyCharsTill anyChar SharedParsers.endCond))
+    let (<+>) ((Route one) : Route<'b,'c>) ((Route two) : Route<'a, 'b>) : Route<'a, 'c> = 
+        Route(PairRoute(one, two))
 
-    let intR<'a> : Route<'a, _>  = Route(ParseRoute(pint32))
+    /// Match a string route component
+    let strR<'a> : Route<'a, string -> 'a> = Route(ParseRoute(manyCharsTill anyChar SharedParsers.endCond))
 
-    let test : Route<unit,_> = constant "starship" </> intR </> constant "captain" </> strR </> constant "cheese"
+    /// Match a signed integer route component
+    let intR<'a> : Route<'a, int32 -> 'a>  = Route(ParseRoute(pint32))
+
+    /// Match an unsigned intenger route component
+    let uintR<'a> : Route<'a, uint32 -> 'a>  = Route(ParseRoute(puint32))
+
+    /// Match a float route component
+    let floatR<'a> : Route<'a, float -> 'a> = Route(ParseRoute(pfloat))
 
     let run ((Route route) : Route<'a,'b>) f str =
         route.Run f str
 
 module HttpHandler =
     let route ((Route route) : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
-        let binder (ctx : Microsoft.AspNetCore.Http.HttpContext) =
+        let (Route slash) = Routing.constant "/"
+        let (Route route') = Route(PairRoute(slash, route))
+        let binder (ctx : HttpContext) =
             let path = ctx.Request.Path.Value
-            match route.Run handlerFunc path with
+            match route'.Run handlerFunc path with
             |Some (v, _) -> v
             |None -> HttpHandler.unhandled
         InternalHandlers.askContext
         |> HttpHandler.bind binder
         
-
-
-
-    //ignore <| test.Run (fun i str -> printfn "%i %s" i str) "starship/5/captain/dhfsudhfdshf"

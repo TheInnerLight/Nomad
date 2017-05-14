@@ -1016,12 +1016,12 @@ GROUP Build
 FRAMEWORK: NETSTANDARD16
 NUGET
   remote: https://www.nuget.org/api/v2
-    FAKE (4.61.1)
+    FAKE (4.61.2)
     Octokit (0.24)
     SourceLink.Fake (1.1)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (5df6bb2d94cbe28a476fd23e79e411dca6678c4c)
+    modules/Octokit/Octokit.fsx (43917109af4ef38194d8993215c3e7c862b19d36)
       Octokit (>= 0.20)
 GROUP Test
 FRAMEWORK: NETSTANDARD16
