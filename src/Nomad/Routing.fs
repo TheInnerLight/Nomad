@@ -62,11 +62,20 @@ module Routing =
     /// Match a signed integer route component
     let intR<'a> : Route<'a, int32 -> 'a>  = Route(ParseRoute(pint32))
 
+    /// Match a signed 64-bit integer route component
+    let int64R<'a> : Route<'a, int64 -> 'a> = Route(ParseRoute(pint64))
+
     /// Match an unsigned intenger route component
     let uintR<'a> : Route<'a, uint32 -> 'a>  = Route(ParseRoute(puint32))
 
+    /// Match an unsigned 64-bit intenger route component
+    let uint64R<'a> : Route<'a, uint64 -> 'a>  = Route(ParseRoute(puint64))
+
     /// Match a float route component
     let floatR<'a> : Route<'a, float -> 'a> = Route(ParseRoute(pfloat))
+
+    /// Match a guid route component
+    let guidR<'a> : Route<'a, System.Guid -> 'a> = Route(ParseRoute(many1Chars (hex <|> pchar '-') |>> System.Guid.Parse))
 
     let run ((Route route) : Route<'a,'b>) f str =
         route.Run f str
