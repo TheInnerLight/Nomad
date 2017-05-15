@@ -7,7 +7,7 @@ open Microsoft.AspNetCore.Http
 type private RParser<'a> = Parser<'a, unit>
 
 module private SharedParsers =
-    let endCond : RParser<unit> = skipChar '/'
+    let endCond : RParser<unit> = skipChar '/' <|> eof
 
 type private IRoute<'a, 'b> = 
     abstract member Run : 'b -> string -> ('a * string) option
@@ -24,6 +24,14 @@ type private ParseRoute<'a,'b>(parser : RParser<'b>) =
         member this.Run (f : 'b -> 'a) str =
             match run parser str with
             |Success(res, _, pos) -> Some (f res, (str.Substring(int <| pos.Index)))
+            |_ -> None
+
+type private EndOfRoute<'a>() =
+    let parser : RParser<unit> = eof
+    interface IRoute<'a, 'a> with
+        member this.Run a str =
+            match run parser str with
+            |Success(res, _, pos) -> Some (a, (str.Substring(int <| pos.Index)))
             |_ -> None
 
 type private PairRoute<'a,'b,'c>(one : IRoute<'b,'c>, two : IRoute<'a, 'b>) = 
@@ -63,10 +71,9 @@ module Routing =
     let run ((Route route) : Route<'a,'b>) f str =
         route.Run f str
 
-module HttpHandler =
-    let route ((Route route) : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
-        let (Route slash) = Routing.constant "/"
-        let (Route route') = Route(PairRoute(slash, route))
+    let internal route ((Route route) : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
+        let (Route slash) = constant "/"
+        let (Route route') = Route(PairRoute(PairRoute(slash, route),EndOfRoute()))
         let binder (ctx : HttpContext) =
             let path = ctx.Request.Path.Value
             match route'.Run handlerFunc path with
@@ -74,4 +81,10 @@ module HttpHandler =
             |None -> HttpHandler.unhandled
         InternalHandlers.askContext
         |> HttpHandler.bind binder
-        
+
+    let ( ===> ) (rt : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
+        route rt handlerFunc
+
+module HttpHandler =
+    let route (rt : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
+        Routing.route rt handlerFunc
