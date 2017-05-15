@@ -9,8 +9,9 @@
     <Compile Include="ContentType.fs" />
     <Compile Include="Async.fs" />
     <Compile Include="Http.fs" />
+    <Compile Include="HttpHandler.fs" />
     <Compile Include="Headers.fs" />
-    <Compile Include="Responses.fs" />
+    <Compile Include="Errors.fs" />
     <Compile Include="VerbHandler.fs" />
     <Compile Include="Auth.fs" />
     <Compile Include="File.fs" />

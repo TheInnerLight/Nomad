@@ -1,6 +1,8 @@
 namespace Nomad.Verbs
 
 open Nomad
+open Nomad.Errors
+open HttpHandler
 
 /// A handler for each Http Verb
 type VerbHandler<'T> =
@@ -21,11 +23,11 @@ module HttpHandler =
     /// A set of default http verb handlers, they return Error 405 : Method Not Allowed in response to all requests.  Use `defaultVerbs with` syntax to specify specific verb handlers.
     let defaultVerbs =
         {
-            Get    = Responses.``Method Not Allowed``
-            Post   = Responses.``Method Not Allowed``
-            Put    = Responses.``Method Not Allowed``
-            Patch  = Responses.``Method Not Allowed``
-            Delete = Responses.``Method Not Allowed``
+            Get    = methodNotAllowed
+            Post   = methodNotAllowed
+            Put    = methodNotAllowed
+            Patch  = methodNotAllowed
+            Delete = methodNotAllowed
         }
 
     /// Handle a set of http verb handlers

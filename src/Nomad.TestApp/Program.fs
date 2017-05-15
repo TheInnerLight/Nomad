@@ -9,6 +9,7 @@ open Nomad
 open Nomad.Routing
 open Nomad.Authentication
 open Nomad.Files
+open Nomad.Errors
 open Nomad.Verbs
 open HttpHandler
 
@@ -53,7 +54,7 @@ module TestServer =
             constant "test" </> intR </> intR </> strR      ===> testHandler3
             constant "video.mp4"                            ===> testHandler4
             constant "login"                                ===> Controllers.loginController
-            Responses.``Not Found``
+            notFound
         ]
 
 

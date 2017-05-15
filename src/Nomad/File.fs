@@ -1,6 +1,7 @@
 namespace Nomad.Files
 
 open Nomad
+open Nomad.Errors
 open System.IO
 
 type FilePart =
@@ -54,7 +55,7 @@ module HttpHandler =
                     startEnds
                     |> List.map (fun (s, e) -> writeFileRange s e file)
                     |> HttpHandler.sequenceIgnore
-                |_ -> Responses.``Range Not Satisfiable``
+                |_ -> HttpHandler.rangeNotSatisfiable
             |Error err -> writeFile file)
 
 module Supplemental =
@@ -69,5 +70,5 @@ module Supplemental =
                     startEnds
                     |> List.map (fun (s, e) -> rangeQualifiedHandler s e)
                     |> HttpHandler.sequenceIgnore
-                |_ -> Responses.``Range Not Satisfiable``
+                |_ -> HttpHandler.rangeNotSatisfiable
             |Error err -> noRangeHandler)
