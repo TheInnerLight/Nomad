@@ -91,6 +91,7 @@ module Routing =
         InternalHandlers.askContext
         |> HttpHandler.bind binder
 
+    /// Map the supplied typesafe route to the supplied handler function
     let ( ===> ) (rt : Route<HttpHandler<'a>,'b>) (handlerFunc : 'b) : HttpHandler<'a> =
         route rt handlerFunc
 

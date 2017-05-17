@@ -5,7 +5,6 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Sscanf.fs" />
     <Compile Include="ContentType.fs" />
     <Compile Include="Async.fs" />
     <Compile Include="Http.fs" />

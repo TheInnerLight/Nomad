@@ -132,23 +132,6 @@ module HttpHandler =
 
     let sequenceIgnore routes = map (ignore) (sequence routes)
 
-    let route path =
-        let binder (ctx : HttpContext) =
-            if path = ctx.Request.Path.Value then
-                return' ()
-            else
-                unhandled
-        bind binder InternalHandlers.askContext 
-
-    /// An http request handler that handles case *sensitive* routes of the supplied PrintFormat pattern
-    let routeScan pattern =
-        let binder (ctx : HttpContext) =
-            match Sscanf.sscanf pattern (ctx.Request.Path.Value) with
-            |Ok result -> return' <| result
-            |Error _ -> unhandled
-        bind binder InternalHandlers.askContext 
-
-
     /// A handler that caches the values from the supplied handler in order to derive the content length of the response
     let deriveContentLength handler = HttpHandler (fun ctx ->
         let oldBody = ctx.Response.Body
@@ -170,33 +153,6 @@ module HttpHandler =
     let redirectPermanent location = InternalHandlers.withContext (fun ctx -> ctx.Response.Redirect(location, true))
 
     let private terminate = HttpHandler (fun _ -> Async.return' Terminate)
-
-    /// Case insensitive Http Handlers
-    module CaseInsensitive =
-        /// An http request handler that handles case *insensitive* routes of the supplied PrintFormat pattern
-        let routeScan (pf:PrintfFormat<'a,'b,'c,'d,'e>) =
-            let binder (ctx : HttpContext) =
-                if (ctx.Request.Path.Value = ctx.Request.Path.Value.ToLowerInvariant()) then
-                    routeScan (PrintfFormat<'a,'b,'c,'d,'e>(pf.Value.ToLowerInvariant()))
-                else
-                    ctx.Request.Path <- PathString(ctx.Request.Path.Value.ToLowerInvariant())
-                    routeScan (PrintfFormat<'a,'b,'c,'d,'e>(pf.Value.ToLowerInvariant()))
-                    |> bind (fun _ ->
-                        redirectPermanent (ctx.Request.Path.Value.ToLowerInvariant())
-                        |> bind (fun _ -> terminate))
-            bind binder InternalHandlers.askContext
-
-        let route path =
-            let binder (ctx : HttpContext) =
-                if path = ctx.Request.Path.Value then
-                    return' ()
-                else if path.ToLowerInvariant() = ctx.Request.Path.Value.ToLowerInvariant() then
-                    redirectPermanent (ctx.Request.Path.Value.ToLowerInvariant())
-                    |> bind (fun _ -> terminate)
-                else
-                    unhandled
-            bind binder InternalHandlers.askContext 
-
            
     let internal runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         InternalHandlers.runHandler handler ctx
