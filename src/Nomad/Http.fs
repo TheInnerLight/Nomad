@@ -11,11 +11,21 @@ type HttpVerb =
     |Delete
 
 type HttpResponseStatus =
+    private 
     |Informational1xx of int
     |Success2xx of int
     |Redirection3xx of int
     |ClientError4xx of int
     |ServerError5xx of int
+
+[<AutoOpen>]
+module HttpResponseStatusPatterns =
+    let (|Informational|Success|Redirection|ClientError|ServerError|) = function
+        |Informational1xx i -> Informational (100 + i)
+        |Success2xx i       -> Success       (200 + i)
+        |Redirection3xx i   -> Redirection   (300 + i)
+        |ClientError4xx i   -> ClientError   (400 + i)
+        |ServerError5xx i   -> ServerError   (500 + i)
 
 module Http =
     let responseString = function
@@ -32,12 +42,26 @@ module Http =
         |ClientError4xx i   -> 400+i
         |ServerError5xx i   -> 500+i
 
-    let requestMethod = function
-        |"GET" -> Get
-        |"POST" -> Post
-        |"PUT" -> Put
-        |"PATCH" -> Patch
-        |"DELETE" -> Delete
+    let tryCreateStatusFromCode code =
+        if code >= 100 && code < 200 then
+            Some <| Informational1xx (code-100)
+        else if code >= 200 && code < 300 then
+            Some <| Success2xx (code-200)
+        else if code >= 300 && code < 400 then
+            Some <| Redirection3xx (code-300)
+        else if code >= 400 && code < 500 then
+            Some <| ClientError4xx (code-400)
+        else if code >= 500 && code < 600 then
+            Some <| ServerError5xx (code-500)
+        else None
+
+    let tryCreateRequestMethodFromString = function
+        |"GET" -> Some Get
+        |"POST" -> Some Post
+        |"PUT" -> Some Put
+        |"PATCH" -> Some Patch
+        |"DELETE" -> Some Delete
+        |_ -> None
 
     let Ok = Success2xx 00
 
@@ -54,3 +78,4 @@ module Http =
     let RangeNotSatisfiable = ClientError4xx 16
 
     let MethodNotAllowed = ClientError4xx 05
+

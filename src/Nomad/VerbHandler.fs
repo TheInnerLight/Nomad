@@ -33,10 +33,11 @@ module HttpHandler =
     /// Handle a set of http verb handlers
     let handleVerbs (verbHandler : VerbHandler<'T>) = 
         HttpHandler (fun ctx -> 
-            match Http.requestMethod ctx.Request.Method with
-            |Get -> InternalHandlers.runHandler verbHandler.Get ctx
-            |Post -> InternalHandlers.runHandler verbHandler.Post ctx
-            |Put -> InternalHandlers.runHandler verbHandler.Put ctx
-            |Patch -> InternalHandlers.runHandler verbHandler.Patch ctx
-            |Delete -> InternalHandlers.runHandler verbHandler.Delete ctx
+            match Http.tryCreateRequestMethodFromString ctx.Request.Method with
+            |Some Get    -> InternalHandlers.runHandler verbHandler.Get ctx
+            |Some Post   -> InternalHandlers.runHandler verbHandler.Post ctx
+            |Some Put    -> InternalHandlers.runHandler verbHandler.Put ctx
+            |Some Patch  -> InternalHandlers.runHandler verbHandler.Patch ctx
+            |Some Delete -> InternalHandlers.runHandler verbHandler.Delete ctx
+            |None        -> InternalHandlers.runHandler (Errors.HttpHandler.methodNotAllowed *> HttpHandler.terminate) ctx
         )
