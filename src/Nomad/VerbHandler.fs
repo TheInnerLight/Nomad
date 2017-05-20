@@ -21,13 +21,13 @@ type VerbHandler<'T> =
 
 module HttpHandler =
     /// A set of default http verb handlers, they return Error 405 : Method Not Allowed in response to all requests.  Use `defaultVerbs with` syntax to specify specific verb handlers.
-    let defaultVerbs =
+    let defaultVerbs<'T> : VerbHandler<'T> =
         {
-            Get    = methodNotAllowed
-            Post   = methodNotAllowed
-            Put    = methodNotAllowed
-            Patch  = methodNotAllowed
-            Delete = methodNotAllowed
+            Get    = methodNotAllowed *> InternalHandlers.terminate
+            Post   = methodNotAllowed *> InternalHandlers.terminate
+            Put    = methodNotAllowed *> InternalHandlers.terminate
+            Patch  = methodNotAllowed *> InternalHandlers.terminate
+            Delete = methodNotAllowed *> InternalHandlers.terminate
         }
 
     /// Handle a set of http verb handlers
@@ -39,5 +39,5 @@ module HttpHandler =
             |Some Put    -> InternalHandlers.runHandler verbHandler.Put ctx
             |Some Patch  -> InternalHandlers.runHandler verbHandler.Patch ctx
             |Some Delete -> InternalHandlers.runHandler verbHandler.Delete ctx
-            |None        -> InternalHandlers.runHandler (Errors.HttpHandler.methodNotAllowed *> HttpHandler.terminate) ctx
+            |None        -> InternalHandlers.runHandler (methodNotAllowed *> InternalHandlers.terminate) ctx
         )

@@ -32,6 +32,8 @@ module internal InternalHandlers =
             |Some(verb') when verb' = verb -> runHandler route ctx
             | _ -> Async.return' Unhandled)
 
+    let terminate = HttpHandler (fun _ -> Async.return' Terminate)
+
 /// A set of functions that create and act upon HttpHandlers
 module HttpHandler =
 
@@ -151,7 +153,7 @@ module HttpHandler =
     /// A handler that returns a response indicating that the resource has been *permanently* redirected to the supplied location
     let redirectPermanent location = InternalHandlers.withContext (fun ctx -> ctx.Response.Redirect(location, true))
 
-    let internal terminate = HttpHandler (fun _ -> Async.return' Terminate)
+    
            
     let internal runContextWith handler (ctx : HttpContext) : System.Threading.Tasks.Task =
         InternalHandlers.runHandler handler ctx

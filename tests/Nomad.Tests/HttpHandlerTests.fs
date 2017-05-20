@@ -1,5 +1,7 @@
 namespace Nomad.UnitTests
 
+#nowarn "0025"
+
 open System
 open FsCheck
 open Nomad
