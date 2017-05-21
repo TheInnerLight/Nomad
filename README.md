@@ -80,7 +80,7 @@ let greet name =
     setStatus Http.Ok 
     *> writeText (sprintf "Hello %s!" name)
 
-let greetRoute = constant "greet" </> strR ===> home
+let greetRoute = constant "greet" </> strR ===> greet
 ```
 
 This routes traffic from `/greet/[name]` to the `greet` handler.  The `name` argument accepted by the `greet` handler will be populated by the string from the route.
@@ -106,7 +106,7 @@ We can handle multiple routes using the choose combinator:
 let testRoutes =
     choose [
         constant "home"              ===> home
-        constant "greet" </> strR    ===> home
+        constant "greet" </> strR    ===> greet
     ]
 ```
 
@@ -118,7 +118,7 @@ Since we are just combining `HttpHandler`s, it's really easy to add a catch all 
 let testRoutes =
     choose [
         constant "home"              ===> home
-        constant "greet" </> strR    ===> home
+        constant "greet" </> strR    ===> greet
         Responses.``Not Found``
     ]
 ```
