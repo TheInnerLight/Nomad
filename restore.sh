@@ -14,7 +14,6 @@ if [ "X$OS" = "XWindows_NT" ] ; then
   	exit $exit_code
   fi
 
-  packages/build/FAKE/tools/FAKE.exe $@ --fsiargs -d:MONO build.fsx 
 else
 
   # use mono
