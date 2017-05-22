@@ -1,5 +1,7 @@
 namespace Nomad.UnitTests
 
+#nowarn "0025"
+
 open System
 open FsCheck
 open Nomad
@@ -24,12 +26,15 @@ module HttpHandlerTests =
         context.Response.ContentType = ContentType.asString mimeType
 
     [<Property>]
-    let ``Given a Http Response Status, setStatus sets the status code of the context's response to the code associated with the supplied response status`` (status : HttpResponseStatus) =
-        let context = DefaultHttpContext()
-        HttpHandler.setStatus status
-        |> HttpHandler.Unsafe.runHandler context
-        |> ignore
-        context.Response.StatusCode = Http.responseCode status
+    let ``Given a Http Response Status, setStatus sets the status code of the context's response to the code associated with the supplied response status`` (code : PositiveInt) =
+        match Http.tryCreateStatusFromCode code.Get with
+        |Some (status) ->
+            let context = DefaultHttpContext()
+            HttpHandler.setStatus status
+            |> HttpHandler.Unsafe.runHandler context
+            |> ignore
+            context.Response.StatusCode = Http.responseCode status
+        |None -> true
 
     [<Property>]
     let ``Given an Http Context containing a request with some bytes, readToEnd returns all of the bytes`` (bytes : byte[]) =
@@ -59,4 +64,6 @@ module HttpHandlerTests =
         |> HttpHandler.Unsafe.runHandler context
         |> ignore
         Array.forall2 (=) (stream.ToArray()) (System.Text.Encoding.UTF8.GetBytes(text.Get))
+
+
 

@@ -1,6 +1,10 @@
 # Nomad
 Nomad is an F# wrapper for ASP.NET Core designed to make backend development simple and hassle free.
 
+## Project Status
+
+Appveyor: ![Build Status](https://ci.appveyor.com/api/projects/status/github/TheInnerLight/Nomad?branch=master&svg=true)
+
 ## Getting Started
 
 Let's start by showing a simple "Hello World!" application written using Nomad.
@@ -51,27 +55,48 @@ readToEnd : HttpHandler<byte[]>
 
 ## Routing
 
-Routing is also handled by another `HttpHandler` called `routeScan`.  This handler determines whether the HttpRequest matches the supplied route pattern.
+Routing functionality is provided by the `Nomad.Routing` namespace.
+
+The routing (`===>`) operator is used to indicate that requests satisfying the route criteria should be routed to a specific handler.
 
 ```fsharp
-let home() =
+open Nomad
+open Nomad.Routing
+open HttpHandler
+
+let home =
   setStatus Http.Ok 
   *> writeText "Welcome Home!"
 
-let homeRoute = routeScan "/home" >>= home
+let homeRoute = constant "home" ===> home
 ```
 
-We can also use F# print format syntax to create typesafe routing:
+This routes traffic from `/home` to the `home` handler.
+
+We can also create typesafe routing:
 
 ```fsharp
 let greet name =
     setStatus Http.Ok 
     *> writeText (sprintf "Hello %s!" name)
 
-let greetRoute = routeScan "/%s" >>= greet
+let greetRoute = constant "greet" </> strR ===> greet
 ```
 
-Here the `%s` token tells the routeScan function to match any `string` and the `>>=` operator passes that `string` to the `greet` function.
+This routes traffic from `/greet/[name]` to the `greet` handler.  The `name` argument accepted by the `greet` handler will be populated by the string from the route.
+
+Supported typesafe routes are :
+
+| route     | F# type       | .NET type 
+|-----------|---------------|----------------
+| `strR`    | `string`      | `System.String`
+| `intR`    | `int`         | `System.Int32`
+| `int64R`  | `int64`       | `System.Int64`
+| `uintR`   | `uint`        | `System.UInt32`
+| `uint64R` | `uint64`      | `System.UInt64`
+| `floatR`  | `float`       | `System.Double`
+| `guidR`   | N/A           | `System.Guid`
+
 
 ### Multiple Routes
 
@@ -80,8 +105,8 @@ We can handle multiple routes using the choose combinator:
 ```fsharp
 let testRoutes =
     choose [
-        routeScan "/home" >>= home
-        routeScan "/%s" >>= greet
+        constant "home"              ===> home
+        constant "greet" </> strR    ===> greet
     ]
 ```
 
@@ -92,27 +117,11 @@ Since we are just combining `HttpHandler`s, it's really easy to add a catch all 
 ```fsharp
 let testRoutes =
     choose [
-        routeScan "/home" >>= home
-        routeScan "/%s" >>= greet
+        constant "home"              ===> home
+        constant "greet" </> strR    ===> greet
         Responses.``Not Found``
     ]
 ```
-
-### Case Sensitivity
-
-Typically, urls are case sensitive, i.e. `/home` and `/HOME` do not match.  If you wish to create case *insensitive* routes, you can use the handlers in the `CaseInsensitive` module.  e.g.
-
-```fsharp
-let testRoutes =
-    choose [
-        CaseInsensitive.routeScan "/home" >>= home
-        routeScan "/%s" >>= greet
-        Responses.``Not Found``
-    ]
-```
-
-Case Insensitive routes consider the lower case version to be the canonical URL, all other casings will trigger a 301 permanent redirection response which redirects to the canonical URL.
-
 
 ## Request Verbs
 

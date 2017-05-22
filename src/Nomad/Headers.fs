@@ -6,6 +6,7 @@ open Microsoft.Net.Http.Headers
 open FParsec
 
 exception HeaderNotFoundException of string
+exception ParseException of string
 
 module private HeaderParsers =
     let inline (!>>) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit : ^a -> ^b) x)

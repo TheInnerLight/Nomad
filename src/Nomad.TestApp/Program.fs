@@ -6,13 +6,15 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open System.Security.Claims
 open Nomad
+open Nomad.Routing
 open Nomad.Authentication
 open Nomad.Files
+open Nomad.Errors
 open Nomad.Verbs
 open HttpHandler
 
 module Controllers =
-    let loginController() =
+    let loginController =
         handleVerbs {
             defaultVerbs with
                 Get = 
@@ -26,21 +28,20 @@ module Controllers =
 
 module TestServer =
     let testHandler1 x = 
-        requireAuth "MyCookieMiddlewareInstance" <|
-            setStatus Http.Ok 
-            *> writeText (sprintf "Hello World! %i" x)
+        setStatus Http.Ok 
+        *> writeText (sprintf "Hello World! %i" x)
 
-    let testHandler2 (x, y) =
+    let testHandler2 x y =
         setStatus Http.Ok 
         *> writeText (sprintf "Hello Galaxy! %i %i" x y)
 
-    let testHandler3 (x, y, z) = 
+    let testHandler3 x y z = 
         deriveContentLength <|
             setStatus Http.Ok 
             *> setContentType ContentType.``text/html`` 
             *> writeText  (sprintf "<p>Hello Universe! %i %i %s</p>" x y z)
 
-    let testHandler4() =
+    let testHandler4 =
         setStatus Http.Ok
         *> setContentType ContentType.``video/mp4``
         *> getReqHeaders
@@ -48,13 +49,16 @@ module TestServer =
 
     let testRoutes =
         choose [
-            routeScan "/%i" >>= testHandler1
-            routeScan "/%i/%i" >>= testHandler2
-            CaseInsensitive.routeScan "/test/%i/%i/%s" >>= testHandler3
-            routeScan "/video.mp4" >>= testHandler4
-            routeScan "/login" >>= Controllers.loginController
-            Responses.``Not Found``
+            intR                                            ===> testHandler1
+            intR </> intR                                   ===> testHandler2
+            constant "test" </> intR </> intR </> strR      ===> testHandler3
+            constant "video.mp4"                            ===> testHandler4
+            constant "login"                                ===> Controllers.loginController
+            notFound
         ]
+
+
+
 
     [<EntryPoint>]
     let main argv = 
@@ -68,4 +72,5 @@ module TestServer =
                 )
 
         Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]}
+
         0 // return an integer exit code

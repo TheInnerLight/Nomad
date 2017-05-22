@@ -1,6 +1,8 @@
 namespace Nomad.Verbs
 
 open Nomad
+open Nomad.Errors
+open HttpHandler
 
 /// A handler for each Http Verb
 type VerbHandler<'T> =
@@ -19,22 +21,23 @@ type VerbHandler<'T> =
 
 module HttpHandler =
     /// A set of default http verb handlers, they return Error 405 : Method Not Allowed in response to all requests.  Use `defaultVerbs with` syntax to specify specific verb handlers.
-    let defaultVerbs =
+    let defaultVerbs<'T> : VerbHandler<'T> =
         {
-            Get    = Responses.``Method Not Allowed``
-            Post   = Responses.``Method Not Allowed``
-            Put    = Responses.``Method Not Allowed``
-            Patch  = Responses.``Method Not Allowed``
-            Delete = Responses.``Method Not Allowed``
+            Get    = methodNotAllowed *> InternalHandlers.terminate
+            Post   = methodNotAllowed *> InternalHandlers.terminate
+            Put    = methodNotAllowed *> InternalHandlers.terminate
+            Patch  = methodNotAllowed *> InternalHandlers.terminate
+            Delete = methodNotAllowed *> InternalHandlers.terminate
         }
 
     /// Handle a set of http verb handlers
     let handleVerbs (verbHandler : VerbHandler<'T>) = 
         HttpHandler (fun ctx -> 
-            match Http.requestMethod ctx.Request.Method with
-            |Get -> InternalHandlers.runHandler verbHandler.Get ctx
-            |Post -> InternalHandlers.runHandler verbHandler.Post ctx
-            |Put -> InternalHandlers.runHandler verbHandler.Put ctx
-            |Patch -> InternalHandlers.runHandler verbHandler.Patch ctx
-            |Delete -> InternalHandlers.runHandler verbHandler.Delete ctx
+            match Http.tryCreateRequestMethodFromString ctx.Request.Method with
+            |Some Get    -> InternalHandlers.runHandler verbHandler.Get ctx
+            |Some Post   -> InternalHandlers.runHandler verbHandler.Post ctx
+            |Some Put    -> InternalHandlers.runHandler verbHandler.Put ctx
+            |Some Patch  -> InternalHandlers.runHandler verbHandler.Patch ctx
+            |Some Delete -> InternalHandlers.runHandler verbHandler.Delete ctx
+            |None        -> InternalHandlers.runHandler (methodNotAllowed *> InternalHandlers.terminate) ctx
         )
