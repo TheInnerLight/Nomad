@@ -1,6 +1,7 @@
 FSharp.Core
 FSharp.NET.Sdk
 Microsoft.NET.Test.Sdk
+Microsoft.NETCore.App
 group Test
   FsCheck
   FsCheck.Xunit

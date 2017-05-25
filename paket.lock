@@ -27,8 +27,10 @@ NUGET
       System.Threading.Thread (>= 4.0)
       System.Threading.ThreadPool (>= 4.0.10)
       System.Threading.Timer (>= 4.0.1)
-    FSharp.NET.Sdk (1.0.4)
-      FSharp.Compiler.Tools (>= 4.1.15) - framework: >= net40, netstandard16
+    FSharp.NET.Sdk (1.0.5)
+      FSharp.Compiler.Tools (>= 4.1.17) - framework: >= net40, netstandard16
+    Libuv (1.9.2)
+      Microsoft.NETCore.Platforms (>= 1.0.1)
     Microsoft.AspNetCore.Authentication (1.1.2)
       Microsoft.AspNetCore.DataProtection (>= 1.1.2) - framework: >= net451, netstandard16
       Microsoft.AspNetCore.Http (>= 1.1.2) - framework: >= net451, netstandard16
@@ -259,6 +261,7 @@ NUGET
       System.Diagnostics.Contracts (>= 4.3) - framework: >= net45, netstandard16
     Microsoft.NET.Test.Sdk (15.0)
       Microsoft.TestPlatform.TestHost (>= 15.0)
+    Microsoft.NETCore.App (1.1.2)
     Microsoft.TestPlatform.TestHost (15.0)
     Newtonsoft.Json (10.0.2)
       Microsoft.CSharp (>= 4.3)
@@ -336,8 +339,6 @@ NUGET
       System.Resources.ResourceManager (>= 4.3)
       System.Runtime (>= 4.3)
   remote: https://dotnet.myget.org/F/dotnet-core
-    Libuv (1.9.1)
-      Microsoft.NETCore.Platforms (>= 1.0.1)
     Microsoft.CSharp (4.3.0)
       System.Collections (>= 4.3)
       System.Diagnostics.Debug (>= 4.3)
@@ -1021,7 +1022,7 @@ NUGET
     SourceLink.Fake (1.1)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (43917109af4ef38194d8993215c3e7c862b19d36)
+    modules/Octokit/Octokit.fsx (1ada6a9c84aada940bd7e6a7b63c0dc62e2fa56e)
       Octokit (>= 0.20)
 GROUP Test
 FRAMEWORK: NETSTANDARD16
