@@ -8,3 +8,4 @@ script:
   - mono .paket/paket.bootstrapper.exe
   - travis_wait 30 dotnet restore
   - dotnet build
+  - dotnet test tests/Nomad.Tests/Nomad.Tests.fsproj
