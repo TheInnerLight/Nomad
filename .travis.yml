@@ -2,10 +2,9 @@ language: csharp
 dist: trusty
 dotnet: 1.0.4
 mono: latest
-install: travis_wait 30 mvn install
 env:
   - HOME=/home/travis APPDATA=/home/travis LocalAppData=/home/travis
 script:
   - mono .paket/paket.bootstrapper.exe
-  - dotnet restore
+  - travis_wait 30 dotnet restore
   - dotnet build
