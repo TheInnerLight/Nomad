@@ -4,13 +4,13 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F8510FC9-E9C3-4996-931A-13F8D9B3182D}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Nomad", "src\Nomad\Nomad.fsproj", "{BEB15B79-7295-473F-91A1-C1120DC3B513}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Nomad", "src/Nomad/Nomad.fsproj", "{BEB15B79-7295-473F-91A1-C1120DC3B513}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Nomad.TestApp", "src\Nomad.TestApp\Nomad.TestApp.fsproj", "{A9F842DF-68AA-4568-851D-F11BE398DDAB}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Nomad.TestApp", "src/Nomad.TestApp/Nomad.TestApp.fsproj", "{A9F842DF-68AA-4568-851D-F11BE398DDAB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{461DD215-C5D1-4CBC-B2A6-67F19E584ACA}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "nomad.tests", "tests\nomad.tests\nomad.tests.fsproj", "{1D2B6273-592E-40F0-9271-79538D6849FD}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "nomad.tests", "tests/nomad.tests/nomad.tests.fsproj", "{1D2B6273-592E-40F0-9271-79538D6849FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
