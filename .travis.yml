@@ -3,9 +3,7 @@ dist: trusty
 dotnet: 1.0.4
 mono: latest
 env:
-  global:
-    - DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-    - DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  - HOME=/home/travis APPDATA=/home/travis LocalAppData=/home/travis
 script:
   - mono .paket/paket.bootstrapper.exe
   - dotnet restore
