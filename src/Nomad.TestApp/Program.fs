@@ -29,6 +29,7 @@ module Controllers =
 module TestServer =
     let testHandler1 x = 
         setStatus Http.Ok 
+        *> setContentType ContentType.``text/plain``
         *> writeText (sprintf "Hello World! %i" x)
 
     let testHandler2 x y =
@@ -71,6 +72,6 @@ module TestServer =
                 AutomaticChallenge = true
                 )
 
-        Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]}
+        Nomad.run {RouteConfig = testRoutes; AuthTypes = [CookieAuth cookieAuthOpts]; ResponseCompression = true}
 
         0 // return an integer exit code

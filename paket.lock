@@ -151,6 +151,10 @@ NUGET
       Microsoft.AspNetCore.Cryptography.KeyDerivation (>= 1.1.2) - framework: >= net451, netstandard16
       Microsoft.AspNetCore.Hosting.Abstractions (>= 1.1.2) - framework: >= net451, netstandard16
       NETStandard.Library (>= 1.6.1) - framework: >= net451, netstandard16
+    Microsoft.AspNetCore.ResponseCompression (1.0.2)
+      Microsoft.AspNetCore.Http.Extensions (>= 1.1.2) - framework: >= net451, netstandard16
+      Microsoft.Extensions.Options (>= 1.1.2) - framework: >= net451, netstandard16
+      NETStandard.Library (>= 1.6.1) - framework: >= net451, netstandard16
     Microsoft.AspNetCore.Routing (1.1.2)
       Microsoft.AspNetCore.Http.Extensions (>= 1.1.2) - framework: >= net451, netstandard16
       Microsoft.AspNetCore.Routing.Abstractions (>= 1.1.2) - framework: >= net451, netstandard16
@@ -1017,12 +1021,12 @@ GROUP Build
 FRAMEWORK: NETSTANDARD16
 NUGET
   remote: https://www.nuget.org/api/v2
-    FAKE (4.61.2)
+    FAKE (4.61.3)
     Octokit (0.24)
     SourceLink.Fake (1.1)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (1ada6a9c84aada940bd7e6a7b63c0dc62e2fa56e)
+    modules/Octokit/Octokit.fsx (52e40cbd39d0916abfd03ca73eede27137d360eb)
       Octokit (>= 0.20)
 GROUP Test
 FRAMEWORK: NETSTANDARD16

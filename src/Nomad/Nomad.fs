@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Routing
+open Microsoft.AspNetCore.ResponseCompression
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Primitives
@@ -18,11 +19,11 @@ open HttpHandler
 type AuthenticationType =
     |CookieAuth of CookieAuthenticationOptions
 
-type NomadConfig = {RouteConfig : HttpHandler<unit>; AuthTypes : AuthenticationType list}
+type NomadConfig = {RouteConfig : HttpHandler<unit>; AuthTypes : AuthenticationType list; ResponseCompression : bool}
 
 module Nomad =
 
-    let defaultConfig = {RouteConfig = return' (); AuthTypes = []}
+    let defaultConfig = {RouteConfig = return' (); AuthTypes = []; ResponseCompression = false}
 
     let runRoutes rc (app : IApplicationBuilder) =
         app.Run(fun ctx -> 
@@ -38,14 +39,21 @@ module Nomad =
     let useDeveloperExceptionPage (app : IApplicationBuilder) =
         app.UseDeveloperExceptionPage()
 
+    let useResponseCompression rc (app : IApplicationBuilder) =
+        if rc then app.UseResponseCompression() else app
+
     let run nc =
         WebHostBuilder()
             .UseKestrel(fun opts -> opts.ThreadCount <- 12)
             .UseContentRoot(Directory.GetCurrentDirectory())
-            .ConfigureServices(fun serv -> ignore <| serv.AddAuthentication())
+            .ConfigureServices(fun serv -> 
+                ignore <| serv.AddAuthentication()
+                ignore <| serv.AddResponseCompression()
+                )
             .Configure(fun app -> 
                 app
                 |> configureAuthList nc.AuthTypes
+                |> useResponseCompression nc.ResponseCompression
                 |> useDeveloperExceptionPage
                 |> runRoutes nc.RouteConfig)        
             .Build()

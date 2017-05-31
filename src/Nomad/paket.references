@@ -8,6 +8,7 @@ Microsoft.AspNetCore.Authentication.Cookies
 Microsoft.AspNetCore.Authentication.JwtBearer
 Microsoft.AspNetCore.Identity
 Microsoft.AspNetCore.Diagnostics
+Microsoft.AspNetCore.ResponseCompression
 Microsoft.Extensions.Configuration
 Microsoft.Extensions.Primitives
 FParsec

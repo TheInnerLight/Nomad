@@ -13,6 +13,7 @@ nuget Microsoft.AspNetCore.Authentication.Google ~> 1.1
 nuget Microsoft.AspNetCore.Authentication.Cookies ~> 1.1
 nuget Microsoft.AspNetCore.Identity ~> 1.1
 nuget Microsoft.AspNetCore.Diagnostics ~> 1.1
+nuget Microsoft.AspNetCore.ResponseCompression ~> 1.0
 nuget Microsoft.Extensions.Configuration ~> 1.1
 nuget Microsoft.Extensions.Primitives ~> 1.1
 nuget Microsoft.AspNetCore.Authentication.JwtBearer ~> 1.1
