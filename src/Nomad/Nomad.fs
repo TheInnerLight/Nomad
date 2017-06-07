@@ -18,6 +18,7 @@ open HttpHandler
 
 type AuthenticationType =
     |CookieAuth of CookieAuthenticationOptions
+    |JwtBearerAuth of JwtBearerOptions
 
 type NomadConfig = {RouteConfig : HttpHandler<unit>; AuthTypes : AuthenticationType list; ResponseCompression : bool}
 
@@ -34,6 +35,7 @@ module Nomad =
         let folder (acc : IApplicationBuilder) authOpt =
             match authOpt with
             |CookieAuth cookieAuthOpts -> acc.UseCookieAuthentication(cookieAuthOpts)
+            |JwtBearerAuth jwtBearerAuthOpts -> acc.UseJwtBearerAuthentication(jwtBearerAuthOpts)
         List.fold folder builder auths
 
     let useDeveloperExceptionPage (app : IApplicationBuilder) =
