@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Http
 open System.Security.Claims
 open Nomad
 open Nomad.Routing
+open Nomad.QueryParams
 open Nomad.Authentication
 open Nomad.Files
 open Nomad.Errors
@@ -27,10 +28,11 @@ module Controllers =
         }
 
 module TestServer =
-    let testHandler1 x = 
-        setStatus Http.Ok 
-        *> setContentType ContentType.``text/plain``
-        *> writeText (sprintf "Hello World! %i" x)
+    let testHandler1 = 
+        queryParams (stringParam "name" <&> intParam "reg") (fun name shipReg ->
+            setStatus Http.Ok 
+            *> setContentType ContentType.``text/plain``
+            *> writeText (sprintf "Hello World! %s %i" name shipReg))
 
     let testHandler2 x y =
         setStatus Http.Ok 
@@ -50,7 +52,7 @@ module TestServer =
 
     let testRoutes =
         choose [
-            intR                                            ===> testHandler1
+            constant "kirk"                                 ===> testHandler1
             intR </> intR                                   ===> testHandler2
             constant "test" </> intR </> intR </> strR      ===> testHandler3
             constant "video.mp4"                            ===> testHandler4

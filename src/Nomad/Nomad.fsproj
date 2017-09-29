@@ -16,7 +16,7 @@
     <Compile Include="File.fs" />
     <Compile Include="Nomad.fs" />
     <Compile Include="Routing.fs" />
+    <Compile Include="Parameters.fs" />
   </ItemGroup>
   <Import Project="../../.paket/Paket.Restore.targets" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
