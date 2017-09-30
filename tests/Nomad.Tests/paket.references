@@ -1,8 +1,6 @@
 FSharp.Core
-FSharp.NET.Sdk
 Microsoft.NET.Test.Sdk
 Microsoft.NETCore.App
 FsCheck
 FsCheck.Xunit
-Xunit
-xunit.runner.visualstudio
+System.ValueTuple

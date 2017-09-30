@@ -2,7 +2,6 @@ framework netstandard16
 source https://www.nuget.org/api/v2/
 strategy: min
 
-nuget FSharp.NET.Sdk ~> 1.0
 nuget FSharp.Core 4.1.18 redirects: force
 nuget Microsoft.AspNetCore.Server.Kestrel ~> 1.1
 nuget Microsoft.AspNetCore.Routing ~> 1.1
@@ -16,11 +15,10 @@ nuget Microsoft.AspNetCore.ResponseCompression ~> 1.0
 nuget Microsoft.Extensions.Configuration ~> 1.1
 nuget Microsoft.Extensions.Primitives ~> 1.1
 nuget Microsoft.AspNetCore.Authentication.JwtBearer ~> 1.1
-nuget Microsoft.NETCore.App ~> 1.1
+nuget Microsoft.NETCore.App ~> 2.0
 nuget FParsec ~> 1.0.2
 nuget System.ValueTuple 4.3.0 framework: >= net452
 nuget Microsoft.NET.Test.Sdk ~> 15.0
 nuget FsCheck 2.10.3
 nuget FsCheck.Xunit 2.10.3
-nuget Xunit
-nuget xunit.runner.visualstudio
+
