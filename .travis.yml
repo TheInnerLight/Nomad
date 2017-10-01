@@ -1,6 +1,6 @@
 language: csharp
 dist: trusty
-dotnet: 1.0.4
+dotnet: 2.0.0
 mono: latest
 env:
   - HOME=/home/travis APPDATA=/home/travis LocalAppData=/home/travis
