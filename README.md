@@ -5,6 +5,8 @@ Nomad is an F# wrapper for ASP.NET Core designed to make backend development sim
 
 Appveyor: ![Build Status](https://ci.appveyor.com/api/projects/status/github/TheInnerLight/Nomad?branch=master&svg=true)
 
+Travis: ![Build Status](https://travis-ci.org/TheInnerLight/Nomad.svg?branch=master)
+
 ## Getting Started
 
 Let's start by showing a simple "Hello World!" application written using Nomad.
