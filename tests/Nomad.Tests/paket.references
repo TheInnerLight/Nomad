@@ -1,6 +1,4 @@
 FSharp.Core
 Microsoft.NET.Test.Sdk
-Microsoft.NETCore.App
 FsCheck
 FsCheck.Xunit
-System.ValueTuple

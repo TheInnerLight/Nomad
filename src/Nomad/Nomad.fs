@@ -15,7 +15,6 @@ open Microsoft.FSharp.Reflection
 open Nomad.Files
 open HttpHandler
 
-
 type AuthenticationType =
     |CookieAuth of CookieAuthenticationOptions
     |JwtBearerAuth of JwtBearerOptions

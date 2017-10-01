@@ -3,11 +3,11 @@ RESTRICTION: == netstandard1.6
 NUGET
   remote: https://www.nuget.org/api/v2
     FParsec (1.0.2)
-    FsCheck (2.10.3)
+    FsCheck (2.9.2)
       FSharp.Core (>= 4.1.18)
       NETStandard.Library (>= 1.6.1)
-    FsCheck.Xunit (2.10.3)
-      FsCheck (>= 2.10.3)
+    FsCheck.Xunit (2.9.2)
+      FsCheck (>= 2.9.2)
       FSharp.Core (>= 4.1.18)
       NETStandard.Library (>= 1.6.1)
       xunit.abstractions (>= 2.0.1)

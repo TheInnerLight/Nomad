@@ -8,6 +8,7 @@ open Nomad
 open FsCheck.Xunit
 open Microsoft.AspNetCore.Http
 
+
 type ContentTypeTests() =
     [<Property(MaxTest = 1)>]
     member this.``TopLevelMime toString for Application type returns "application" `` () =

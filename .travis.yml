@@ -5,7 +5,7 @@ mono: latest
 env:
   - HOME=/home/travis APPDATA=/home/travis LocalAppData=/home/travis
 script:
-  - mono .paket/paket.bootstrapper.exe
+  #- mono .paket/paket.bootstrapper.exe
   - travis_wait 30 dotnet restore
   - dotnet build
   - dotnet test tests/Nomad.Tests/Nomad.Tests.fsproj
